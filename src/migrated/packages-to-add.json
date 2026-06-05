@@ -1,0 +1,38 @@
+{
+  "_comment": "Run: npx expo install <package> for each entry below.",
+  "_comment2": "expo install picks the SDK-compatible version automatically.",
+
+  "add_with_expo_install": [
+    "expo-secure-store",
+    "expo-location",
+    "expo-camera",
+    "expo-blur",
+    "expo-image-manipulator",
+    "expo-web-browser",
+    "@react-navigation/drawer",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-safe-area-context",
+    "react-native-screens",
+    "react-native-maps",
+    "@react-native-picker/picker"
+  ],
+
+  "add_with_npm_install": [
+    "react-native-paper",
+    "@expo/vector-icons",
+    "react-native-map-clustering",
+    "react-native-webview",
+    "socket.io-client",
+    "react-native-status-bar-height",
+    "figlet"
+  ],
+
+  "notes": {
+    "react-native-paper": "Upgrade to v5 for React Native 0.74+ compatibility. v4 API is largely the same.",
+    "react-native-vector-icons": "Replace with @expo/vector-icons (pre-bundled in Expo SDK). Same API: import { MaterialIcons } from '@expo/vector-icons'",
+    "react-native-map-clustering": "Deprecated. Consider switching to react-native-maps built-in clustering or @gorhom/bottom-sheet.",
+    "figlet": "Works fine but adds bundle size. Remove if only used for the console splash.",
+    "@react-navigation/drawer": "Required by expo-router/drawer even though you don't import it directly."
+  }
+}

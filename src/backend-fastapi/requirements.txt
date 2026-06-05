@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+asyncpg
+alembic
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pydantic
+pydantic-settings
+python-dotenv
+psycopg[binary,pool]
+email-validator
+redis==5.0.8
+psycopg2-binary==2.9.9
+httpx

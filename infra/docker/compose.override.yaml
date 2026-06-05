@@ -1,0 +1,37 @@
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_PORT}:5432" # Expose DB to host for local inspection
+
+  pgadmin: # Admin tool isolated to local development
+    container_name: duaneko-pgadmin
+    image: dpage/pgadmin4:latest
+    ports:
+      - "${PGADMIN_PORT}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+  api:
+    ports:
+      - "${API_PORT}:8000"
+    volumes:
+      - ../../src/api:/app # Hot-reloading source code
+    environment:
+      ALLOWED_ORIGINS: "http://localhost:${FRONTEND_PORT}"
+      LOG_LEVEL: DEBUG
+
+  web:
+    ports:
+      - "${FRONTEND_PORT}:3000"
+
+  mobile:
+    ports:
+      - "${EXPO_PORT:-8081}:8081" # Adjusted to standard Expo port

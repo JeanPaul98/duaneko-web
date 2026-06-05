@@ -1,0 +1,53 @@
+services:
+  postgres:
+    container_name: duaneko-postgres
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    container_name: duaneko-api
+    build:
+      context: ../../src/api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DOCKER_ENV: "1"
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SECRET_KEY: "${API_SECRET_KEY}"
+      ALGORITHM: "${API_ALGORITHM}"
+      ACCESS_TOKEN_EXPIRE_MINUTES: "${API_ACCESS_TOKEN_EXPIRE_MINUTES}"
+
+  web:
+    container_name: duaneko-web
+    build:
+      context: ../../src/frontend_nextjs
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      network: host
+    depends_on:
+      - api
+
+  mobile:
+    container_name: duaneko-mobile
+    build:
+      context: ../../src/frontend_expo
+      args:
+        API_URL: ${NEXT_PUBLIC_API_URL}
+      network: host
+    depends_on:
+      - api
+
+volumes:
+  postgres-data:
+  pgadmin-data:
