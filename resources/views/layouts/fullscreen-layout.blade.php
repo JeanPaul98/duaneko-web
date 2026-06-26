@@ -90,46 +90,25 @@
             }
         })();
     </script>
-    
 </head>
 
-<body
-    x-data="{ 'loaded': true}"
-    x-init="$store.sidebar.isExpanded = window.innerWidth >= 1280;
-    const checkMobile = () => {
-        if (window.innerWidth < 1280) {
-            $store.sidebar.setMobileOpen(false);
-            $store.sidebar.isExpanded = false;
-        } else {
-            $store.sidebar.isMobileOpen = false;
-            $store.sidebar.isExpanded = true;
-        }
-    };
-    window.addEventListener('resize', checkMobile);">
+<body x-data="{ 'loaded': true}" x-init="$store.sidebar.isExpanded = window.innerWidth >= 1280;
+const checkMobile = () => {
+    if (window.innerWidth < 1280) {
+        $store.sidebar.setMobileOpen(false);
+        $store.sidebar.isExpanded = false;
+    } else {
+        $store.sidebar.isMobileOpen = false;
+        $store.sidebar.isExpanded = true;
+    }
+};
+window.addEventListener('resize', checkMobile);">
 
     {{-- preloader --}}
     <x-common.preloader/>
     {{-- preloader end --}}
 
-    <div class="min-h-screen xl:flex">
-        @include('layouts.backdrop')
-        @include('layouts.sidebar')
-
-        <div class="flex-1 transition-all duration-300 ease-in-out"
-            :class="{
-                'xl:ml-[290px]': $store.sidebar.isExpanded || $store.sidebar.isHovered,
-                'xl:ml-[90px]': !$store.sidebar.isExpanded && !$store.sidebar.isHovered,
-                'ml-0': $store.sidebar.isMobileOpen
-            }">
-            <!-- app header start -->
-            @include('layouts.app-header')
-            <!-- app header end -->
-            <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
-                @yield('content')
-            </div>
-        </div>
-
-    </div>
+    @yield('content')
 
 </body>
 
