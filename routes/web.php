@@ -24,7 +24,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ReportController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('/pages/dashboard/admin_panel');
 });
 
 Auth::routes();
@@ -48,13 +48,13 @@ Route::resource('ramassages', RamassageController::class);
 
 
 Route::get('/admin/home', function () {
-    return view('dashboard.home');
+    return view('pages.dashboard.home');
 })->middleware('auth:admin');
 
 Route::get('/manager/home', function () {
-    return view('dashboard.home');
+    return view('pages.dashboard.home');
 })->middleware('auth:manager');
 
 Route::get('/agent/home', function () {
-    return view('dashboard.home');
+    return view('pages.dashboard.home');
 })->middleware('auth:agent');
