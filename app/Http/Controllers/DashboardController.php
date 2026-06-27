@@ -24,27 +24,27 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('dashboard.home');
+        return view('others.home');
     }
 
     public function reports(): View
     {
-        return view('dashboard.reports');
+        return view('others.reports');
     }
 
     public function agents(): View
     {
-        return view('dashboard.agents');
+        return view('others.agents');
     }
 
     public function managers(): View
     {
-        return view('dashboard.managers');
+        return view('others.managers');
     }
 
     public function companies(): View
     {
-        return view('dashboard.companies');
+        return view('others.companies');
     }
 
     public function zones(): View
@@ -54,6 +54,6 @@ class DashboardController extends Controller
 
     public function ramassages(): View
     {
-        return view('dashboard.ramassages');
+        return view('others.ramassages');
     }
 }
