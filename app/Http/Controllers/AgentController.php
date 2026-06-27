@@ -15,7 +15,7 @@ class AgentController extends Controller
     
      public function create()
      {
-         return view('agents.create');
+         return view('pages.agents.create');
      }
  
      public function index(){
@@ -30,7 +30,7 @@ class AgentController extends Controller
             $agents = Agent::latest()->paginate(5);  
         } 
         
-        return view('agents.index', compact('agents'))
+        return view('pages.agents.index', compact('agents'))
             ->with('i', (request()->input('page', 1) - 1) * 5);
      }
  
@@ -75,7 +75,7 @@ class AgentController extends Controller
 
      public function edit(Agent $agent)
      {
-         return view('agents.edit',compact('agent'));
+         return view('pages.agents.edit',compact('agent'));
      }
  
  
@@ -119,7 +119,7 @@ class AgentController extends Controller
      }
 
      public function show(Agent $agent){
-         return view('agents.show',compact('agent'));
+         return view('pages.agents.show',compact('agent'));
     }
  
 }

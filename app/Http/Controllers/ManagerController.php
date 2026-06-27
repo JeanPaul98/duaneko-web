@@ -17,14 +17,14 @@ class ManagerController extends Controller
     public function create()
     {
         $companies=Company::all();
-        return view('managers.create',compact('companies'));
+        return view('pages.managers.create',compact('companies'));
     }
 
     public function index(){
        
       
         $managers=Manager::latest()->paginate(5);
-        return view('managers.index',compact('managers'))
+        return view('pages.managers.index',compact('managers'))
         ->with('i', (request()->input('page', 1) - 1) * 5);
     }
 
@@ -66,7 +66,7 @@ class ManagerController extends Controller
     
     public function edit(Manager $manager)
     {
-        return view('managers.edit',compact('manager'));
+        return view('pages.managers.edit',compact('manager'));
     }
 
 

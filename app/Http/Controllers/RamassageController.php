@@ -37,7 +37,7 @@ class RamassageController extends Controller
             $ramassages = Ramassage::latest()->paginate(10); 
             
         }
-        return view('ramassages.index', compact('ramassages'))
+        return view('pages.ramassages.index', compact('ramassages'))
             ->with('i', (request()->input('page', 1) - 1) * 5);
     }
 
@@ -54,7 +54,7 @@ class RamassageController extends Controller
             // dd($zones);
         }
         $reports = Report::all();
-        return view('ramassages.create', compact('agents', 'reports', 'zones'));
+        return view('pages.ramassages.create', compact('agents', 'reports', 'zones'));
     }
 
     /**
@@ -93,7 +93,7 @@ class RamassageController extends Controller
      */
     public function show(Ramassage $ramassage): View
     {
-        return view('ramassages.show', compact('ramassage'));
+        return view('pages.ramassages.show', compact('ramassage'));
     }
 
 
@@ -109,7 +109,7 @@ class RamassageController extends Controller
             $agents = Agent::where('company_id',$manager->company_id)->get();
         // $agents = Agent::where('company_id', Auth::user()->company_id)->get();;
 
-        return view('ramassages.edit', compact('ramassage', 'agents'));
+        return view('pages.ramassages.edit', compact('ramassage', 'agents'));
     }
 
 

@@ -1,98 +1,11 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('content')
-    <div class="pc-container">
-        <div class="pcoded-content">
-            <!-- [ breadcrumb ] start -->
-            <div class="page-header">
-                <div class="page-block">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div class="page-header-title">
-                                <h5 class="m-b-10">Zones</h5>
-                            </div>
-                            <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="index.html">Tableau de bord</a></li>
-                                <li class="breadcrumb-item">Zones</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-xl-12 col-md-12">
-
-                    <div class="card">
-                        <div class="card-body table-border-style">
-
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <h5>Zones</h5>
-                                </div>
-                                @if(Auth::guard('manager')->check())
-                                <div class="col-sm-6">
-                                    <a class="btn btn-success btn-sm btn-round mb-3" href="{{ route('zones.create') }}"><i
-                                            class="feather icon-plus"></i> Ajouter une zone</a>
-                                </div>
-                                @endif
-                                @if ($message = Session::get('success'))
-                                <div class="alert alert-success">
-                                    <p>{{ $message }}</p>
-                                </div>
-                            @endif
-
-                            </div>
-
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Nom</th>
-                                            <th>Designation Zone Google</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($zones as $zone)
-                                            <tr>
-                                                <td>{{ ++$i }}</td>
-                                                <td>{{ $zone->name }}</td>
-                                                <td>{{ $zone->google_map_name }}</td>
-                                                <td>
-                                                  <form id="{{$zone->id}}" action="{{ route('zones.destroy', $zone) }}" method="POST">
-
-                                                        <a class="btn btn-primary btn-sm"
-                                                            href="{{ route('zones.show', $zone) }}"><i
-                                                                class="feather icon-eye"></i> Detail</a>
-                                                        @if(Auth::guard('manager')->check())
-                                                        <a class="btn btn-info btn-sm"
-                                                            href="{{ route('zones.edit', $zone) }}"><i
-                                                                class="feather icon-edit"></i> Modifier</a>
-
-                                                        @csrf
-                                                        @method('DELETE')
-
-                                                        <button class="btn btn-danger btn-sm" onclick="if(confirm('Voulez-vous vraiment supprimer cette entreprise ?')) {document.getElementById('{{ $zone->id }}').submit();}">
-                                                            <i class="feather icon-trash-2"></i> Supprimer
-                                                        </button>
-                                                        @endif
-
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-
-                                {!! $zones->links() !!}
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
+    <x-common.page-breadcrumb pageTitle="From Elements" />
+    <div class="space-y-6">
+        <x-common.component-card title="Basic Table 2">
+            <x-tables.basic-tables.basic-tables-two />
+        </x-common.component-card>
     </div>
 @endsection
+

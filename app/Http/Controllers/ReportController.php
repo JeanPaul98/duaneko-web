@@ -18,28 +18,28 @@ class ReportController extends Controller
         $reports = Report::all(); 
         if(Auth::guard('admin')->check()){
             $zones=Zone::all();
-            return view('reports.index',['reports'=>$reports,'zones'=>$zones]); 
+            return view('pages.reports.index',['reports'=>$reports,'zones'=>$zones]); 
         }elseif(Auth::guard('manager')->check()){
             $id_manager = Auth::guard('manager')->id();
             $id_company = Manager::find($id_manager);
             $zones = Zone::where('company_id',$id_company->company_id)->get();
-            return view('reports.index',['reports'=>$reports,'zones'=>$zones]);
+            return view('pages.reports.index',['reports'=>$reports,'zones'=>$zones]);
         }else{
             $id_agent = Auth::guard('agent')->id();
             $id_company = Agent::find($id_agent);
             $zones = Zone::where('company_id',$id_company->company_id)->get();
-            return view('reports.index',['reports'=>$reports,'zones'=>$zones]);
+            return view('pages.reports.index',['reports'=>$reports,'zones'=>$zones]);
         }
     }
     
     public function show(Report $report)
     {
-        return view('reports.show', compact('report',));
+        return view('pages.reports.show', compact('report',));
     }
 
     public function edit(Report $report)
     {
-        return view('reports.edit',compact('report'));
+        return view('pages.reports.edit',compact('report'));
     }
 
     public function update(Request $request, Report $report)

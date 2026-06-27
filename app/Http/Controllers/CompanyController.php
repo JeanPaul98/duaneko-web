@@ -16,14 +16,14 @@ class CompanyController extends Controller
     public function create()
     {
        
-        return view('companies.create');
+        return view('pages.companies.create');
     }
     
     public function index()
     {
         $companies = Company::latest()->paginate(5); 
 
-        return view('companies.index', compact('companies'))
+        return view('pages.companies.index', compact('companies'))
             ->with('i', (request()->input('page', 1) - 1) * 5);
         
     }
@@ -58,7 +58,7 @@ class CompanyController extends Controller
     public function edit(Company $company)
     {
         
-        return view('companies.edit', compact('company'));
+        return view('pages.companies.edit', compact('company'));
     }
 
     public function show(Company $company)
@@ -70,7 +70,7 @@ class CompanyController extends Controller
         $compt_manager = count($managers);
         $compt_zone = count($zones);
         
-        return view('companies.show',compact('company','agents','zones','managers','compt_agent','compt_manager','compt_zone'));
+        return view('pages.companies.show',compact('company','agents','zones','managers','compt_agent','compt_manager','compt_zone'));
     }
 
     public function update(Request $request, Company $company)

@@ -44,7 +44,7 @@ class LoginController extends Controller
     public function showAgentLoginForm()
     {
         
-        return view('auth.agent.login', ['url' => route('agent.login-view'), 'title' => 'Agent']);
+        return view('pages.auth.agent.login', ['url' => route('agent.login-view'), 'title' => 'Agent']);
     }
 
     public function agentLogin(Request $request)
@@ -65,7 +65,7 @@ class LoginController extends Controller
 
     public function showManagerLoginForm()
     {
-        return view('auth.manager.login', ['url' => route('manager.login-view'), 'title'=>'Manager']);
+        return view('pages.auth.manager.login', ['url' => route('manager.login-view'), 'title'=>'Manager']);
     }
     
     public function managerLogin(Request $request)

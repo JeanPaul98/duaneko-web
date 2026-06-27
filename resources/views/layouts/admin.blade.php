@@ -86,6 +86,7 @@
                                     class="material-icons-two-tone">my_location</i></span><span
                                 class="pc-mtext">Signalements</span></a>
                     </li>
+                    
                     @if ((Auth::guard('admin')->check()) || (Auth::guard('manager')->check()))
                     <li class="pc-item">
                         <a href="{{ route('agents.index') }}" class="pc-link "><span class="pc-micon"><i

@@ -24,13 +24,13 @@ class ZoneController extends Controller
             $zones = Zone::latest()->paginate(10); 
         } 
         
-        return view('zones.index', compact('zones'))
+        return view('pages.zones.index', compact('zones'))
             ->with('i', (request()->input('page', 1) - 1) * 5);
     }
 
     public function create()
     {
-        return view('zones.create');
+        return view('pages.zones.create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -56,13 +56,13 @@ class ZoneController extends Controller
 
     public function show(Zone $zone)
     {
-        return view('zones.show', compact('zone'));
+        return view('pages.zones.show', compact('zone'));
     }
 
 
     public function edit(Zone $zone)
     {  
-        return view('zones.edit',compact('zone'));
+        return view('pages.zones.edit',compact('zone'));
     }
 
     public function update(Request $request, Zone $zone)

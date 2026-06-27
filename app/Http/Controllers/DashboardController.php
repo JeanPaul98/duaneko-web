@@ -24,36 +24,36 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('others.home');
+        return view('pages.others.home');
     }
 
     public function reports(): View
     {
-        return view('others.reports');
+        return view('pages.others.reports');
     }
 
     public function agents(): View
     {
-        return view('others.agents');
+        return view('pages.others.agents');
     }
 
     public function managers(): View
     {
-        return view('others.managers');
+        return view('pages.others.managers');
     }
 
     public function companies(): View
     {
-        return view('others.companies');
+        return view('pages.others.companies');
     }
 
     public function zones(): View
     {
-        return view('zones.index');
+        return view('pages.zones.index');
     }
 
     public function ramassages(): View
     {
-        return view('others.ramassages');
+        return view('pages.others.ramassages');
     }
 }
