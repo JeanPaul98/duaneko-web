@@ -110,7 +110,11 @@ class ManagerController extends Controller
     }
 
     public function show(Manager $manager){
-        return view('managers.show',compact('manager'));
+        $agents = Agent::where('company_id', $manager->company_id)->paginate(5);
+        $zones = Zone::where('company_id', $manager->company_id)->get();
+        $compt_agent = $agents->total();
+        $compt_zone = count($zones);
+        return view('pages.managers.show', compact('manager', 'agents', 'zones', 'compt_agent', 'compt_zone'));
     }
 
 

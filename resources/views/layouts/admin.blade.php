@@ -77,9 +77,9 @@
             <div class="navbar-content">
                 <ul class="pc-navbar">
                     <li class="pc-item">
-                        <a href="home" class="pc-link "><span class="pc-micon"><i
+                        <a href="{{ route('home') }}" class="pc-link "><span class="pc-micon"><i
                                     class="material-icons-two-tone">home</i></span><span class="pc-mtext">Tableau de
-                                bord</span></a>
+                                    bord</span></a>
                     </li>
                     <li class="pc-item">
                         <a href="{{ route('reports.index') }}" class="pc-link "><span class="pc-micon"><i

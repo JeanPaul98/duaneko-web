@@ -119,7 +119,10 @@ class AgentController extends Controller
      }
 
      public function show(Agent $agent){
-         return view('pages.agents.show',compact('agent'));
+         $agent->load('ramassages');
+         $ramassages = $agent->ramassages()->paginate(5);
+         $compt_ramassage = $agent->ramassages()->count();
+         return view('pages.agents.show', compact('agent', 'ramassages', 'compt_ramassage'));
     }
  
 }

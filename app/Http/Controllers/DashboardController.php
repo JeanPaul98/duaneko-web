@@ -24,7 +24,7 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('pages.others.home');
+        return view('pages.dashboard.dashboard');
     }
 
     public function reports(): View

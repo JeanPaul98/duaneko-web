@@ -21,6 +21,7 @@ class ZoneSeeder extends Seeder
             'northeast_longitude' => "-17.4755624",
             'southwest_latitude' => '14.7097626',
             'southwest_longitude' => "-17.5098244",
+            'color' => "#3b82f6",
             'company_id' => "1",
         ]);
     }
