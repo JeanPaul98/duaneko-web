@@ -29,8 +29,6 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('home');
-
 Route::get('/agent', [LoginController::class, 'showAgentLoginForm'])->name('agent.login-view');
 Route::get('/manager', [LoginController::class, 'showManagerLoginForm'])->name('manager.login-view');
 Route::get('/admin', [LoginController::class, 'showAdminLoginForm'])->name('admin.login-view');
@@ -39,13 +37,16 @@ Route::post('/agent', [LoginController::class, 'agentLogin'])->name('agent.login
 Route::post('/manager', [LoginController::class, 'managerLogin'])->name('manager.login');
 Route::post('/admin', [LoginController::class, 'adminLogin'])->name('admin.login');
 
-Route::resource('zones', ZoneController::class);
-Route::resource('managers', ManagerController::class);
-Route::resource('agents', AgentController::class);
-Route::resource('companies', CompanyController::class);
-Route::resource('reports', ReportController::class);
-Route::resource('ramassages', RamassageController::class);
+Route::middleware('auth:admin,manager,agent')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('home');
 
+    Route::resource('zones', ZoneController::class);
+    Route::resource('managers', ManagerController::class);
+    Route::resource('agents', AgentController::class);
+    Route::resource('companies', CompanyController::class);
+    Route::resource('reports', ReportController::class);
+    Route::resource('ramassages', RamassageController::class);
+});
 
 Route::get('/admin/home', function () {
     return view('pages.dashboard.dashboard');
