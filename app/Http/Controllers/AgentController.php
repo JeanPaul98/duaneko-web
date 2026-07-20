@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Rule;
 
 class AgentController extends Controller
 {
@@ -49,7 +50,7 @@ class AgentController extends Controller
              'first_name' => ['required', 'string', 'max:255'],
              'last_name' => ['required', 'string', 'max:255'],
              'phone_number' => ['required', 'string'],
-             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('agents')],
              'password' => ['required', 'string', 'min:4', 'confirmed'],
              
          ], $messages);
@@ -95,7 +96,7 @@ class AgentController extends Controller
          $request = $request->validate([
              'first_name' => ['required', 'string', 'max:255'],
              'last_name' => ['required', 'string', 'max:255'],
-             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('agents')->ignore($agent->id)],
              'phone_number' => ['required', 'string',],
          ],
           $messages
@@ -119,7 +120,10 @@ class AgentController extends Controller
      }
 
      public function show(Agent $agent){
-         return view('pages.agents.show',compact('agent'));
+         $agent->load('ramassages');
+         $ramassages = $agent->ramassages()->paginate(5);
+         $compt_ramassage = $agent->ramassages()->count();
+         return view('pages.agents.show', compact('agent', 'ramassages', 'compt_ramassage'));
     }
  
 }

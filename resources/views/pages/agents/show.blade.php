@@ -57,46 +57,45 @@
                                 <h4>Plus de Détails</h4>
                                 <hr>
                                 <h4 class="text-center"><ul class="breadcrumb"><li class="breadcrumb-item "> <h4 > Il appartient à l'entreprise  :  {{ $agent->company->name }}</h4></li></ul></h4>
-                                <h4 class="text-center"><ul class="breadcrumb"><li class="breadcrumb-item "> <h4 >Il est impliqué sur :  100 Ranssages </h4></li></ul></h4>
+                                <h4 class="text-center"><ul class="breadcrumb"><li class="breadcrumb-item "> <h4 >Il est impliqué sur :  {{ $compt_ramassage }} Ramassages </h4></li></ul></h4>
                                 <div class="card-body">
                                     <div class="row flow-offset-1">
-                                    <H6 class="text-success">La liste de ses ramassages : 100</H6>
-                                    <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>No</th>
-                                            <th>name</th>
-                                            <th>date_de_ramassage</th>
-                                            <th>heure_de_ramassage</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                            <tr>
-                                                <td> 1</td>
-                                                <td>Ramassage slug</td>
-                                                <td>29/06/2023</td>
-                                                <td>09:10</td>
-                                                <td>
-                                                  <form id="" action="#" method="POST">
-                                                        <a class="btn btn-primary btn-sm"
-                                                            href=""><i
-                                                                class="feather icon-eye"></i> </a>
-                                                        <a class="btn btn-info btn-sm"
-                                                            href="#"><i
-                                                                class="feather icon-edit"></i> </a>
-
-                                                        @csrf 
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                      
-                                    </tbody>
-                                </table>
-
-                                
-                                    
-                                </div>
+                                        <div class="col-md-12">
+                                            <H6 class="text-success">La liste de ses ramassages : {{ $compt_ramassage }}</H6>
+                                            <div class="table-responsive">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="white-space: nowrap;">No</th>
+                                                            <th style="white-space: nowrap;">name</th>
+                                                            <th style="white-space: nowrap;">date_de_ramassage</th>
+                                                            <th style="white-space: nowrap;">heure_de_ramassage</th>
+                                                            <th style="white-space: nowrap;">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach ($ramassages as $ramassage)
+                                                            <tr>
+                                                                <td>{{ $loop->iteration }}</td>
+                                                                <td>{{ $ramassage->name }}</td>
+                                                                <td>{{ $ramassage->date_de_ramassage }}</td>
+                                                                <td>{{ $ramassage->heure_de_ramassage }}</td>
+                                                                <td style="white-space: nowrap;">
+                                                                  <form id="{{ $ramassage->id }}" action="{{ route('ramassages.destroy', $ramassage->id) }}" method="POST">
+                                                                        <a class="btn btn-primary btn-sm"
+                                                                            href="{{ route('ramassages.show', $ramassage->id) }}"><i
+                                                                                class="feather icon-eye"></i> </a>
+                                                                        @csrf 
+                                                                    </form>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            {!! $ramassages->links() !!}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

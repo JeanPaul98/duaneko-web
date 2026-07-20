@@ -10,6 +10,7 @@ use App\Models\Zone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Rule;
 
 class ManagerController extends Controller
 {
@@ -43,7 +44,7 @@ class ManagerController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'phone_number' => ['required', 'string'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('managers')],
             'password' => ['required', 'string', 'min:4', 'confirmed'],
             'company_id' => ['required', 'string',],
         ], $messages);
@@ -86,7 +87,7 @@ class ManagerController extends Controller
         $request = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('managers')->ignore($manager->id)],
             'phone_number' => ['required', 'string',],
         ],
          $messages
@@ -110,7 +111,12 @@ class ManagerController extends Controller
     }
 
     public function show(Manager $manager){
-        return view('managers.show',compact('manager'));
+        $manager->load('company');
+        $agents = Agent::where('company_id', $manager->company_id)->paginate(5);
+        $zones = Zone::where('company_id', $manager->company_id)->get();
+        $compt_agent = $agents->total();
+        $compt_zone = count($zones);
+        return view('pages.managers.show', compact('manager', 'agents', 'zones', 'compt_agent', 'compt_zone'));
     }
 
 

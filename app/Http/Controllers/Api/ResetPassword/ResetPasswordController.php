@@ -21,7 +21,7 @@ class ResetPasswordController extends Controller
         $passwordReset = ResetCodePassword::firstWhere('code', $request->code);
 
         // check if it does not expired: the time is one hour
-        if ($passwordReset->created_at > now()->addHour()) {
+        if ($passwordReset->created_at->addHour()->isPast()) {
             $passwordReset->delete();
             return response(['message' => trans('passwords.code_is_expire')], 422);
         }
