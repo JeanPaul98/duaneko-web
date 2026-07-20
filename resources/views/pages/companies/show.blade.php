@@ -92,11 +92,11 @@
                     
                     <div class="col-md-6">
                         <div class="card mt-2">
-                            <div class="card-header">
+                                <div class="card-header">
                                 <h4>Liste des managers</h4>
                                 <hr>
                                         
-                                
+                                <div class="table-responsive">
                                     <table class="table table-hover m-b-0  ab">
                                     <thead>
                                         <tr>
@@ -122,6 +122,7 @@
 
                                     </tbody>
                                 </table>
+                                </div>
                                 {!! $managers->links() !!}
                                     
                             </div>
@@ -130,9 +131,10 @@
 
                     <div class="col-md-6">
                         <div class="card mt-2">
-                            <div class="card-header">
+                                <div class="card-header">
                                 <h4>Liste des agents</h4>
                                 <hr>
+                                <div class="table-responsive">
                                 <table class="table table-hover m-b-0  cd">
                                     <thead>
                                         <tr>
@@ -157,6 +159,7 @@
                                         
                                     </tbody>
                                 </table>
+                                </div>
                                <h5 class="text-center mt-2">{!! $agents->links() !!}</h5> 
                             </div>
                         </div>
@@ -181,12 +184,13 @@
                                                 </tr>
                                             </thead>
                                                 <tbody>
+                                                    @foreach ($zones as $zone)
                                                     <tr>
-                                                        <td>Unity Pugh</td>
-                                                        <td>9958</td>
-                                                        <td>Curicó</td>
+                                                        <td>{{ $zone->name }}</td>
+                                                        <td>{{ $zone->slug }}</td>
+                                                        <td>{{ $zone->google_map_name }}</td>
                                                     </tr>
-                                                    
+                                                    @endforeach
                                                     
                                                 </tbody>
                                             </table>

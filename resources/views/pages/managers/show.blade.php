@@ -57,24 +57,15 @@
                                 <h4>Plus de Détails</h4>
                                 <hr>
                                 <h4 class="text-center"><ul class="breadcrumb"><li class="breadcrumb-item "> <h4 > Il appartient à l'entreprise  :  {{ $manager->company->name }}</h4></li></ul></h4>
-                                <h4 class="text-center"><ul class="breadcrumb"><li class="breadcrumb-item "> <h4 >Il a ajouté  Agents</h4></li></ul></h4>
-                                <h4 class="text-center"><ul class="breadcrumb"><li class="breadcrumb-item "> <h4 >Il a ajouté  Zones  </h4></li></ul></h4>
+                                <h4 class="text-center"><ul class="breadcrumb"><li class="breadcrumb-item "> <h4 >Il a ajouté {{ $compt_agent }} Agents</h4></li></ul></h4>
+                                <h4 class="text-center"><ul class="breadcrumb"><li class="breadcrumb-item "> <h4 >Il a ajouté {{ $compt_zone }} Zones</h4></li></ul></h4>
                                 <div class="card-body">
                                 <div class="row flow-offset-1">
                                     <div class="col-xs-6 col-md-4 Larger  p-3 mb-3 rounded-3">
                                     <div class="product tumbnail thumbnail-3 border bg-white  border border-5 rounded-3" style=" height:200px;" ><a href="#"><img src="" alt=""></a>
                                         <div class="caption text-center">
-                                        <h3 class=""><a class="text-dark" href="">Le nombre de managers est : </a></h3>
-                                        <h4 class="price text-success " style="font-size: 2rem;"> </h4>
-                                        <span class="price sale"></span>
-                                        </div>
-                                    </div>
-                                    </div>
-                                    <div class="col-xs-6 col-md-4 Larger  p-3 mb-3   rounded-3" >
-                                    <div class="product tumbnail thumbnail-3 border border-5 bg-white   rounded-3" style=" height:200px;" ><a href="#"><img src="" alt=""></a>
-                                        <div class="caption text-center">
                                         <h3 class=""><a class="text-dark" href="">Le nombre de agents est : </a></h3>
-                                        <h4 class="price text-success " style="font-size: 2rem;"></h4>
+                                        <h4 class="price text-success " style="font-size: 2rem;">{{ $compt_agent }}</h4>
                                         <span class="price sale"></span>
                                         </div>
                                     </div>
@@ -83,10 +74,41 @@
                                     <div class="product tumbnail thumbnail-3 border bg-white  border border-5 rounded-3" style=" height:200px;" ><a href="#"><img src="" alt=""></a>
                                         <div class="caption text-center">
                                         <h3 class=""><a class="text-dark" href="">Le nombre de zones est : </a></h3>
-                                        <h4 class="price text-success " style="font-size: 2rem;"> </h4>
+                                        <h4 class="price text-success " style="font-size: 2rem;">{{ $compt_zone }}</h4>
                                         <span class="price sale"></span>
                                         </div>
                                     </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-4">
+                                    <div class="col-md-12">
+                                        <h5 class="text-success">Liste des agents</h5>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="white-space: nowrap;">No</th>
+                                                        <th style="white-space: nowrap;">Prénom</th>
+                                                        <th style="white-space: nowrap;">Nom</th>
+                                                        <th style="white-space: nowrap;">Email</th>
+                                                        <th style="white-space: nowrap;">Téléphone</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($agents as $agent)
+                                                    <tr>
+                                                        <td>{{ $loop->iteration }}</td>
+                                                        <td>{{ $agent->first_name }}</td>
+                                                        <td>{{ $agent->last_name }}</td>
+                                                        <td>{{ $agent->email }}</td>
+                                                        <td>{{ $agent->phone_number }}</td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {!! $agents->links() !!}
                                     </div>
                                 </div>
                                 </div>

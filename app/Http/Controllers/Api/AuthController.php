@@ -12,7 +12,7 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh']]);
     }
 
     // sign up users
@@ -92,6 +92,21 @@ class AuthController extends Controller
     }
 
 
+
+    // refresh token
+    public function refresh()
+    {
+        try {
+            $newToken = auth('api')->refresh();
+            return $this->respondWithToken($newToken);
+        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+            return response()->json(['success' => false, 'message' => 'Token has expired and cannot be refreshed'], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            return response()->json(['success' => false, 'message' => 'Token is invalid'], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return response()->json(['success' => false, 'message' => 'Token is absent'], 401);
+        }
+    }
 
     // current user connected
     public function me()
