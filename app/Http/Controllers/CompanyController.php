@@ -11,19 +11,19 @@ use Illuminate\Http\RedirectResponse;
 class CompanyController extends Controller
 {
     
-    public function create()
-    {
-       
-        return view('pages.companies.create');
-    }
-    
     public function index()
     {
-        $companies = Company::latest()->paginate(5); 
+        $companies = Company::latest()->paginate(5);
+
+        foreach ($companies as $company) {
+            $company->managers_count = User::role('manager')->where('company_id', $company->id)->count();
+            $company->agents_count = User::role('agent')->where('company_id', $company->id)->count();
+            $company->zones_count = Zone::where('company_id', $company->id)->count();
+        }
 
         return view('pages.companies.index', compact('companies'))
             ->with('i', (request()->input('page', 1) - 1) * 5);
-        
+
     }
 
     public function store(Request $request)
@@ -53,24 +53,6 @@ class CompanyController extends Controller
         return redirect()->route('companies.index')
                         ->with('success','Companies deleted successfully');
     }
-    public function edit(Company $company)
-    {
-        
-        return view('pages.companies.edit', compact('company'));
-    }
-
-    public function show(Company $company)
-    {
-        $agents = User::role('agent')->where('company_id',$company->id)->paginate(2);
-        $managers = User::role('manager')->where('company_id',$company->id)->paginate(2);
-        $zones = Zone::where('company_id',$company->id)->get();
-        $compt_agent = count($agents);
-        $compt_manager = count($managers);
-        $compt_zone = count($zones);
-        
-        return view('pages.companies.show',compact('company','agents','zones','managers','compt_agent','compt_manager','compt_zone'));
-    }
-
     public function update(Request $request, Company $company)
     {
         

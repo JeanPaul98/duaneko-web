@@ -11,17 +11,16 @@ use Illuminate\Validation\Rule;
 class AgentController extends Controller
 {
 
-     public function create()
-     {
-         return view('pages.agents.create');
-     }
-
      public function index(){
 
         if (auth()->user()->hasRole('manager')) {
             $agents = User::role('agent')->where('company_id', auth()->user()->company_id)->paginate(5);
         } else {
             $agents = User::role('agent')->latest()->paginate(5);
+        }
+
+        foreach ($agents as $agent) {
+            $agent->ramassages_count = $agent->ramassages()->count();
         }
 
         return view('pages.agents.index', compact('agents'))
@@ -94,13 +93,6 @@ class AgentController extends Controller
 
 
 
-     public function edit(User $agent)
-     {
-         return view('pages.agents.edit',compact('agent'));
-     }
-
-
-
      public function update(Request $request, User $agent)
      {
          $messages = [
@@ -139,11 +131,5 @@ class AgentController extends Controller
 
          return redirect()->route('agents.index')->with('success','Agent deleted successfully');
      }
-
-     public function show(User $agent){
-         $ramassages = $agent->ramassages()->paginate(5);
-         $compt_ramassage = $agent->ramassages()->count();
-         return view('pages.agents.show', compact('agent', 'ramassages', 'compt_ramassage'));
-    }
 
 }

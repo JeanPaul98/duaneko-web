@@ -20,6 +20,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ZoneController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ManagerController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 
 Route::get('/', function () {
@@ -31,17 +32,19 @@ Auth::routes(['register' => false]);
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('home');
 
-    // Entreprises et manageurs : gérés exclusivement par l'admin.
-    Route::resource('companies', CompanyController::class)->middleware('role:admin');
-    Route::resource('managers', ManagerController::class)->middleware('role:admin');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Entreprises et manageurs : gérés exclusivement par l'admin. Création/édition/détail en modale
+    // sur la page index, donc pas besoin des routes create/edit/show.
+    Route::resource('companies', CompanyController::class)->except(['create', 'edit', 'show'])->middleware('role:admin');
+    Route::resource('managers', ManagerController::class)->except(['create', 'edit', 'show'])->middleware('role:admin');
     Route::patch('managers/{manager}/validate', [ManagerController::class, 'validateAccount'])->name('managers.validate')->middleware('role:admin');
     Route::patch('managers/{manager}/reject', [ManagerController::class, 'reject'])->name('managers.reject')->middleware('role:admin');
 
-    // Agents : consultés par l'admin et le manager, gérés (créer/modifier/supprimer) par le manager.
-    // Note : "create"/"edit" doivent être déclarés avant "show" ({agent}), sinon le routeur
-    // capture "create" comme valeur du paramètre {agent} et casse le binding.
-    Route::resource('agents', AgentController::class)->except(['index', 'show'])->middleware('role:manager');
-    Route::resource('agents', AgentController::class)->only(['index', 'show'])->middleware('role:admin|manager');
+    // Agents : consultés par l'admin et le manager, gérés (créer/modifier/supprimer) par le manager,
+    // création/édition/détail en modale sur la page index.
+    Route::resource('agents', AgentController::class)->except(['index', 'show', 'create', 'edit'])->middleware('role:manager');
+    Route::resource('agents', AgentController::class)->only(['index'])->middleware('role:admin|manager');
     Route::patch('agents/{agent}/validate', [AgentController::class, 'validateAccount'])->name('agents.validate')->middleware('role:admin|manager');
     Route::patch('agents/{agent}/reject', [AgentController::class, 'reject'])->name('agents.reject')->middleware('role:admin|manager');
 

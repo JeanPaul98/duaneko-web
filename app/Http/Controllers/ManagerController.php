@@ -13,17 +13,17 @@ use Illuminate\Validation\Rule;
 class ManagerController extends Controller
 {
 
-    public function create()
-    {
-        $companies=Company::all();
-        return view('pages.managers.create',compact('companies'));
-    }
-
     public function index(){
 
+        $managers = User::role('manager')->with('company')->latest()->paginate(5);
+        $companies = Company::all();
 
-        $managers=User::role('manager')->latest()->paginate(5);
-        return view('pages.managers.index',compact('managers'))
+        foreach ($managers as $manager) {
+            $manager->agents_count = User::role('agent')->where('company_id', $manager->company_id)->count();
+            $manager->zones_count = Zone::where('company_id', $manager->company_id)->count();
+        }
+
+        return view('pages.managers.index',compact('managers', 'companies'))
         ->with('i', (request()->input('page', 1) - 1) * 5);
     }
 
@@ -80,15 +80,6 @@ class ManagerController extends Controller
         return redirect()->route('managers.index')->with('success', 'Manager rejeté.');
     }
 
-
-
-    public function edit(User $manager)
-    {
-        return view('pages.managers.edit',compact('manager'));
-    }
-
-
-
     public function update(Request $request, User $manager)
     {
         $messages = [
@@ -126,15 +117,5 @@ class ManagerController extends Controller
 
         return redirect()->route('managers.index')->with('success','Manager deleted successfully');
     }
-
-    public function show(User $manager){
-        $manager->load('company');
-        $agents = User::role('agent')->where('company_id', $manager->company_id)->paginate(5);
-        $zones = Zone::where('company_id', $manager->company_id)->get();
-        $compt_agent = $agents->total();
-        $compt_zone = count($zones);
-        return view('pages.managers.show', compact('manager', 'agents', 'zones', 'compt_agent', 'compt_zone'));
-    }
-
 
 }
