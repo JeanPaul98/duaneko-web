@@ -64,7 +64,7 @@
                             <div class="card-header">
                                 <h4>Details</h4>
                                 <hr>
-                               @if(Auth::guard('manager')->check())
+                               @if(auth()->user()->hasRole('manager'))
                                
                                 <a class="btn btn-info btn-sm"  href="{{ route ('reports.edit' ,$report) }}"><i
                                                                 class="feather icon-edit"></i> Modifier</a>

@@ -4,16 +4,17 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
-
-    protected $guard = "user";
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     public function getJWTIdentifier()
     {
@@ -23,7 +24,35 @@ class User extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'role' => $this->getRoleNames()->first(),
+        ];
+    }
+
+    public function isValidated(): bool
+    {
+        return $this->status === 'validated';
+    }
+
+    public function full_name()
+    {
+        return "$this->first_name $this->last_name";
+    }
+
+    /**
+     * Get the company this staff member (manager/agent) belongs to.
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Get the ramassages this agent is assigned to.
+     */
+    public function ramassages(): BelongsToMany
+    {
+        return $this->belongsToMany(Ramassage::class, 'ramassages_agents', 'agent_id', 'ramassage_id');
     }
 
     /**
@@ -37,6 +66,8 @@ class User extends Authenticatable implements JWTSubject
         'phone_number',
         'email',
         'password',
+        'company_id',
+        'status',
     ];
 
     /**

@@ -41,6 +41,6 @@ class Ramassage extends Model
 
     public function agents(): BelongsToMany
     {
-        return $this->belongsToMany(Agent::class , 'ramassages_agents');
+        return $this->belongsToMany(User::class, 'ramassages_agents', 'ramassage_id', 'agent_id');
     }
 }

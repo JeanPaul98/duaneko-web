@@ -22,7 +22,7 @@ class MenuHelper
         ];
 
         // Rôle Admin ou Manager
-        if (Auth::guard('admin')->check() || Auth::guard('manager')->check()) {
+        if (Auth::user()->hasRole(['admin', 'manager'])) {
             $items[] = [
                 'icon' => 'agents',
                 'name' => 'Agents',
@@ -31,7 +31,7 @@ class MenuHelper
         }
 
         // Rôle Admin uniquement
-        if (Auth::guard('admin')->check()) {
+        if (Auth::user()->hasRole('admin')) {
             $items[] = [
                 'icon' => 'companies',
                 'name' => 'Entreprises',

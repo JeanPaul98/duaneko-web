@@ -43,7 +43,17 @@
                                         <hr>
                                         <h5 class="card-title breadcrumb"><a href="#">Email : {{$manager->email}}</a></h5>
                                         <hr>
-                                        
+                                        <h5 class="card-title breadcrumb">Statut :
+                                            @if ($manager->status === 'validated')
+                                                <span class="badge bg-success">Validé</span>
+                                            @elseif ($manager->status === 'rejected')
+                                                <span class="badge bg-danger">Rejeté</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark">En attente</span>
+                                            @endif
+                                        </h5>
+                                        <hr>
+
                                     </div>
                                     </div>  
                                     

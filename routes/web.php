@@ -20,42 +20,42 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ZoneController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ManagerController;
-use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ReportController;
 
 Route::get('/', function () {
-    return view('/pages/auth/admin/login');
+    return redirect()->route('login');
 });
 
-Auth::routes();
+Auth::routes(['register' => false]);
 
-Route::get('/agent', [LoginController::class, 'showAgentLoginForm'])->name('agent.login-view');
-Route::get('/manager', [LoginController::class, 'showManagerLoginForm'])->name('manager.login-view');
-Route::get('/admin', [LoginController::class, 'showAdminLoginForm'])->name('admin.login-view');
-
-Route::post('/agent', [LoginController::class, 'agentLogin'])->name('agent.login');
-Route::post('/manager', [LoginController::class, 'managerLogin'])->name('manager.login');
-Route::post('/admin', [LoginController::class, 'adminLogin'])->name('admin.login');
-
-Route::middleware('auth:admin,manager,agent')->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('home');
 
-    Route::resource('zones', ZoneController::class);
-    Route::resource('managers', ManagerController::class);
-    Route::resource('agents', AgentController::class);
-    Route::resource('companies', CompanyController::class);
+    // Entreprises et manageurs : gérés exclusivement par l'admin.
+    Route::resource('companies', CompanyController::class)->middleware('role:admin');
+    Route::resource('managers', ManagerController::class)->middleware('role:admin');
+    Route::patch('managers/{manager}/validate', [ManagerController::class, 'validateAccount'])->name('managers.validate')->middleware('role:admin');
+    Route::patch('managers/{manager}/reject', [ManagerController::class, 'reject'])->name('managers.reject')->middleware('role:admin');
+
+    // Agents : consultés par l'admin et le manager, gérés (créer/modifier/supprimer) par le manager.
+    // Note : "create"/"edit" doivent être déclarés avant "show" ({agent}), sinon le routeur
+    // capture "create" comme valeur du paramètre {agent} et casse le binding.
+    Route::resource('agents', AgentController::class)->except(['index', 'show'])->middleware('role:manager');
+    Route::resource('agents', AgentController::class)->only(['index', 'show'])->middleware('role:admin|manager');
+    Route::patch('agents/{agent}/validate', [AgentController::class, 'validateAccount'])->name('agents.validate')->middleware('role:admin|manager');
+    Route::patch('agents/{agent}/reject', [AgentController::class, 'reject'])->name('agents.reject')->middleware('role:admin|manager');
+
+    // Zones : consultées par l'admin et le manager, gérées par le manager.
+    Route::resource('zones', ZoneController::class)->except(['index', 'show'])->middleware('role:manager');
+    Route::resource('zones', ZoneController::class)->only(['index', 'show'])->middleware('role:admin|manager');
+
+    // Ramassages : consultés par l'admin, le manager (sa société) et l'agent (ses missions), gérés par le manager.
+    Route::resource('ramassages', RamassageController::class)->except(['index', 'show'])->middleware('role:manager');
+    Route::resource('ramassages', RamassageController::class)->only(['index', 'show'])->middleware('role:admin|manager|agent');
+
     Route::resource('reports', ReportController::class);
-    Route::resource('ramassages', RamassageController::class);
 });
 
-Route::get('/admin/home', function () {
-    return view('pages.dashboard.dashboard');
-})->middleware('auth:admin');
-
-Route::get('/manager/home', function () {
-    return view('pages.dashboard.dashboard');
-})->middleware('auth:manager');
-
-Route::get('/agent/home', function () {
-    return view('pages.dashboard.dashboard');
-})->middleware('auth:agent');
+Route::get('/modal', function () {
+    return view('components.ui.alert');
+})->middleware(['auth', 'role:admin']);

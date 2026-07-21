@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Zone;
-use App\Models\Agent;
+use App\Models\User;
 use App\Models\Company;
-use App\Models\Manager;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 
 class CompanyController extends Controller
@@ -62,9 +60,9 @@ class CompanyController extends Controller
     }
 
     public function show(Company $company)
-    { 
-        $agents = Agent::where('company_id',$company->id)->paginate(2);
-        $managers = Manager::where('company_id',$company->id)->paginate(2);
+    {
+        $agents = User::role('agent')->where('company_id',$company->id)->paginate(2);
+        $managers = User::role('manager')->where('company_id',$company->id)->paginate(2);
         $zones = Zone::where('company_id',$company->id)->get();
         $compt_agent = count($agents);
         $compt_manager = count($managers);

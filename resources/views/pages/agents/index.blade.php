@@ -1,101 +1,96 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('content')
-    <div class="pc-container">
-        <div class="pcoded-content">
-            <!-- [ breadcrumb ] start -->
-            <div class="page-header">
-                <div class="page-block">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div class="page-header-title">
-                                <h5 class="m-b-10">agents</h5>
-                            </div>
-                            <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="index.html">Tableau de bord</a></li>
-                                <li class="breadcrumb-item">agents</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+    <x-common.page-breadcrumb pageTitle="Agents" />
+
+    <div class="space-y-6">
+        @if ($message = Session::get('success'))
+            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                {{ $message }}
+            </div>
+        @endif
+
+        <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white pt-4 dark:border-white/[0.05] dark:bg-white/[0.03]">
+            <div class="flex flex-col gap-4 px-6 mb-4 sm:flex-row sm:items-center sm:justify-between">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Agents</h3>
+                @if (auth()->user()->hasRole('manager'))
+                    <a href="{{ route('agents.create') }}"
+                        class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-theme-sm font-medium text-white hover:bg-brand-600">
+                        Ajouter un agent
+                    </a>
+                @endif
             </div>
 
-            <div class="row">
-                <div class="col-xl-12 col-md-12">
+            <div class="max-w-full overflow-x-auto">
+                <table class="w-full">
+                    <thead class="border-t border-y border-gray-100 bg-gray-50 dark:border-white/[0.05] dark:bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Prénom</th>
+                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Nom</th>
+                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Téléphone</th>
+                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Email</th>
+                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Statut</th>
+                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($agents as $agent)
+                            <tr class="border-b border-gray-100 dark:border-white/[0.05]">
+                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $agent->first_name }}</td>
+                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $agent->last_name }}</td>
+                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $agent->phone_number }}</td>
+                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $agent->email }}</td>
+                                <td class="px-6 py-3.5">
+                                    @if ($agent->status === 'validated')
+                                        <x-ui.badge color="success">Validé</x-ui.badge>
+                                    @elseif ($agent->status === 'rejected')
+                                        <x-ui.badge color="error">Rejeté</x-ui.badge>
+                                    @else
+                                        <x-ui.badge color="warning">En attente</x-ui.badge>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-3.5">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <a href="{{ route('agents.show', $agent) }}"
+                                            class="rounded-lg border border-gray-300 px-3 py-1.5 text-theme-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]">Détail</a>
 
-                    <div class="card">
-                        <div class="card-body table-border-style">
+                                        @if (auth()->user()->hasRole('manager'))
+                                            <a href="{{ route('agents.edit', $agent) }}"
+                                                class="rounded-lg border border-gray-300 px-3 py-1.5 text-theme-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]">Modifier</a>
+                                        @endif
 
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <h5>agents</h5>
-                                </div>
-                                @if(Auth::guard('manager')->check())
-                                <div class="col-sm-6">
-                                    <a class="btn btn-success btn-sm btn-round mb-3" href="{{ route('agents.create') }}"><i
-                                            class="feather icon-plus"></i> Ajouter une agent</a>
-                                </div>
-                                @endif
-                                @if ($message = Session::get('success'))
-                                <div class="alert alert-success">
-                                    <p>{{ $message }}</p>
-                                </div>
-                            @endif
+                                        @if ($agent->status === 'pending' && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('manager')))
+                                            <form action="{{ route('agents.validate', $agent) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button class="rounded-lg bg-green-50 px-3 py-1.5 text-theme-xs font-medium text-green-700 hover:bg-green-100 dark:bg-green-500/15 dark:text-green-500">Valider</button>
+                                            </form>
+                                            <form action="{{ route('agents.reject', $agent) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button class="rounded-lg bg-red-50 px-3 py-1.5 text-theme-xs font-medium text-red-700 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-500">Rejeter</button>
+                                            </form>
+                                        @endif
 
-                            </div>
+                                        @if (auth()->user()->hasRole('manager'))
+                                            <form action="{{ route('agents.destroy', $agent) }}" method="POST"
+                                                onsubmit="return confirm('Voulez-vous vraiment supprimer cet agent ?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="rounded-lg bg-red-50 px-3 py-1.5 text-theme-xs font-medium text-red-700 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-500">Supprimer</button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Prénom</th>
-                                            <th>Nom</th>
-                                            <th>Téléphone</th>
-                                            <th>Email</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($agents as $agent)
-                                            <tr>
-                                                <td>{{ ++$i }}</td>
-                                                <td>{{ $agent->first_name }}</td>
-                                                <td>{{ $agent->last_name }}</td>
-                                                <td style="white-space: nowrap;">{{ $agent->phone_number }}</td>
-                                                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ $agent->email }}">
-                                                    {{ $agent->email }}
-                                                </td>
-                                                <td style="white-space: nowrap;">
-                                                  <form id="{{ $agent->id }}" action="{{ route('agents.destroy', $agent) }}" method="POST">
-                                                        <a class="btn btn-primary btn-sm"
-                                                            href="{{ route('agents.show', $agent) }}"><i
-                                                                class="feather icon-eye"></i> Detail</a>
-                                                        @if(Auth::guard('manager')->check())        
-                                                        <a class="btn btn-info btn-sm"
-                                                            href="{{ route('agents.edit', $agent) }}"><i
-                                                                class="feather icon-edit"></i> Modifier</a>
-
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button class="btn btn-danger btn-sm" onclick="if(confirm('Voulez-vous vraiment supprimer cette entreprise ?'));{document.getElementById('{{ $agent->id }}').submit()}"><i
-                                                                class="feather icon-trash-2"></i>Supprimer</button>
-                                                        @endif
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-
-                                {!! $agents->links() !!}
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
+            <div class="px-6 py-4">
+                {!! $agents->links() !!}
             </div>
         </div>
     </div>
 @endsection
-
