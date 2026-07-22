@@ -21,27 +21,22 @@ class RamassageController extends Controller
 
         if ($user->hasRole('manager')) {
             $ramassages = Ramassage::where('company_id', $user->company_id)->paginate(5);
+            $agents = User::role('agent')->where('company_id', $user->company_id)->get();
+            $zones = Zone::where('company_id', $user->company_id)->get();
         } elseif ($user->hasRole('agent')) {
             $ramassages = $user->ramassages()->paginate(5);
+            $agents = collect();
+            $zones = collect();
         } else {
             $ramassages = Ramassage::latest()->paginate(10);
+            $agents = collect();
+            $zones = collect();
         }
 
-        return view('pages.ramassages.index', compact('ramassages'))
-            ->with('i', (request()->input('page', 1) - 1) * 5);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        if (auth()->user()->hasRole('manager')) {
-            $agents = User::role('agent')->where('company_id', auth()->user()->company_id)->get();
-            $zones = Zone::where('company_id', auth()->user()->company_id)->get();
-        }
         $reports = Report::all();
-        return view('pages.ramassages.create', compact('agents', 'reports', 'zones'));
+
+        return view('pages.ramassages.index', compact('ramassages', 'agents', 'zones', 'reports'))
+            ->with('i', (request()->input('page', 1) - 1) * 5);
     }
 
     /**
@@ -78,17 +73,6 @@ class RamassageController extends Controller
     public function show(Ramassage $ramassage): View
     {
         return view('pages.ramassages.show', compact('ramassage'));
-    }
-
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Ramassage $ramassage): View
-    {
-        $agents = User::role('agent')->where('company_id', auth()->user()->company_id)->get();
-
-        return view('pages.ramassages.edit', compact('ramassage', 'agents'));
     }
 
 

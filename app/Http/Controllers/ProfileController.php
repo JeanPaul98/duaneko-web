@@ -9,6 +9,17 @@ use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
+    public function getPhoto($filename)
+    {
+        $path = storage_path('app/public/' . $filename);
+
+        if (file_exists($path)) {
+            return response()->file($path);
+        }
+
+        abort(404);
+    }
+
     public function update(Request $request): RedirectResponse
     {
         $user = auth()->user();

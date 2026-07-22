@@ -9,9 +9,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use OpenApi\Attributes as OA;
 use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
+#[OA\Schema(
+    schema: 'User',
+    type: 'object',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 12),
+        new OA\Property(property: 'first_name', type: 'string', example: 'Ama'),
+        new OA\Property(property: 'last_name', type: 'string', example: 'Koffi'),
+        new OA\Property(property: 'email', type: 'string', nullable: true, example: 'ama.koffi@example.com'),
+        new OA\Property(property: 'phone_number', type: 'string', example: '90000000'),
+        new OA\Property(property: 'status', type: 'string', enum: ['pending', 'validated', 'rejected'], example: 'validated'),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+    ]
+)]
 class User extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
@@ -68,6 +82,14 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'company_id',
         'status',
+        'date_of_birth',
+        'gender',
+        'address',
+        'city',
+        'district',
+        'id_document_type',
+        'id_document_number',
+        'photo',
     ];
 
     /**
@@ -88,5 +110,6 @@ class User extends Authenticatable implements JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'date_of_birth' => 'date',
     ];
 }

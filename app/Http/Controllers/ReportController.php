@@ -2,43 +2,163 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Zone;
 use App\Models\Report;
+use App\Models\User;
+use App\Models\Zone;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class ReportController extends Controller
 {
-
-    public function index()
+    public function index(Request $request)
     {
-        $reports = Report::all();
         $user = auth()->user();
+        $isAdmin = $user->hasRole('admin');
 
-        if ($user->hasRole('admin')) {
-            $zones = Zone::all();
-        } else {
-            $zones = Zone::where('company_id', $user->company_id)->get();
+        $zones = $isAdmin ? Zone::all() : Zone::where('company_id', $user->company_id)->get();
+
+        $query = Report::query();
+
+        if (!$isAdmin) {
+            if ($zones->isEmpty()) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->where(function ($q) use ($zones) {
+                    foreach ($zones as $zone) {
+                        [$latMin, $latMax, $lngMin, $lngMax] = $this->zoneBounds($zone);
+                        $q->orWhere(function ($qq) use ($latMin, $latMax, $lngMin, $lngMax) {
+                            $qq->whereBetween('latitude', [$latMin, $latMax])
+                                ->whereBetween('longitude', [$lngMin, $lngMax]);
+                        });
+                    }
+                });
+            }
         }
 
-        return view('pages.reports.index', ['reports' => $reports, 'zones' => $zones]);
+        $statusFilter = $request->query('status');
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        $zoneFilter = $request->query('zone');
+        if ($zoneFilter && ($zone = $zones->firstWhere('id', $zoneFilter))) {
+            [$latMin, $latMax, $lngMin, $lngMax] = $this->zoneBounds($zone);
+            $query->whereBetween('latitude', [$latMin, $latMax])
+                ->whereBetween('longitude', [$lngMin, $lngMax]);
+        }
+
+        $reports = $query->with('user')->latest()->paginate(10)->withQueryString();
+
+        foreach ($reports as $report) {
+            $matchedZone = $zones->first(fn ($zone) => $this->reportWithinZones($report, collect([$zone])));
+            $report->zone_name = $matchedZone->name ?? null;
+        }
+
+        return view('pages.reports.index', compact('reports', 'zones', 'statusFilter', 'zoneFilter'));
     }
 
     public function show(Report $report)
     {
-        return view('pages.reports.show', compact('report',));
+        abort_unless($this->canAccess($report), 403);
+
+        $user = auth()->user();
+        $zones = $user->hasRole('admin') ? Zone::all() : $this->companyZones($user);
+        $matchedZone = $zones->first(fn ($zone) => $this->reportWithinZones($report, collect([$zone])));
+
+        $agents = $matchedZone
+            ? User::role('agent')->where('company_id', $matchedZone->company_id)->where('status', 'validated')->get()
+            : collect();
+
+        $message = $this->buildAgentMessage($report);
+
+        foreach ($agents as $agent) {
+            $phone = preg_replace('/\D/', '', $agent->phone_number ?? '');
+            $agent->whatsapp_url = 'https://api.whatsapp.com/send/?phone=' . $phone . '&text=' . rawurlencode($message);
+            $agent->mailto_url = 'mailto:' . $agent->email . '?subject=' . rawurlencode('Signalement à traiter') . '&body=' . rawurlencode($message);
+        }
+
+        return view('pages.reports.show', compact('report', 'agents'));
     }
 
-    public function edit(Report $report)
+    private function buildAgentMessage(Report $report): string
     {
-        return view('pages.reports.edit',compact('report'));
+        $typeLabels = ['wild_dumps' => 'Dépôt sauvage'];
+        $statusLabels = ['pending' => 'En attente', 'in_progress' => 'En cours', 'done' => 'Traité'];
+
+        return implode("\r\n", [
+            'Bonjour,',
+            '',
+            'Un signalement nécessite votre intervention :',
+            'Type : ' . ($typeLabels[$report->type] ?? $report->type),
+            'Description : ' . $report->description,
+            'Statut : ' . ($statusLabels[$report->status] ?? $report->status),
+            'Localisation : https://www.google.com/maps?q=' . $report->latitude . ',' . $report->longitude,
+            '',
+            'Merci de vous y rendre dès que possible.',
+        ]);
     }
 
     public function update(Request $request, Report $report)
     {
+        abort_unless($this->canModerate($report), 403);
+
         $request->validate([
-            'status' => 'required',
+            'status' => ['required', 'string', 'in:pending,in_progress,done'],
         ]);
-        $report->update($request->all());
-        return redirect()->route('reports.show',compact('report'))->with('success','Report modifier avec success');
+
+        $report->update(['status' => $request->status]);
+
+        return redirect()->route('reports.show', $report)->with('success', 'Statut du signalement mis à jour avec succès.');
+    }
+
+    private function zoneBounds(Zone $zone): array
+    {
+        return [
+            min($zone->northeast_latitude, $zone->southwest_latitude),
+            max($zone->northeast_latitude, $zone->southwest_latitude),
+            min($zone->northeast_longitude, $zone->southwest_longitude),
+            max($zone->northeast_longitude, $zone->southwest_longitude),
+        ];
+    }
+
+    private function reportWithinZones(Report $report, Collection $zones): bool
+    {
+        foreach ($zones as $zone) {
+            [$latMin, $latMax, $lngMin, $lngMax] = $this->zoneBounds($zone);
+
+            if ($report->latitude >= $latMin && $report->latitude <= $latMax
+                && $report->longitude >= $lngMin && $report->longitude <= $lngMax) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function companyZones(User $user): Collection
+    {
+        return Zone::where('company_id', $user->company_id)->get();
+    }
+
+    private function canAccess(Report $report): bool
+    {
+        $user = auth()->user();
+
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return $this->reportWithinZones($report, $this->companyZones($user));
+    }
+
+    private function canModerate(Report $report): bool
+    {
+        $user = auth()->user();
+
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return $user->hasRole('manager') && $this->reportWithinZones($report, $this->companyZones($user));
     }
 }

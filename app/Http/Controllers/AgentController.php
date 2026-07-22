@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rule;
 
 class AgentController extends Controller
 {
+    private array $genders = ['homme', 'femme', 'autre'];
+    private array $idDocumentTypes = ['cni', 'passeport'];
 
      public function index(){
 
@@ -44,8 +47,23 @@ class AgentController extends Controller
              'phone_number' => ['required', 'string'],
              'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')],
              'password' => ['required', 'string', 'min:4', 'confirmed'],
+             'date_of_birth' => ['nullable', 'date'],
+             'gender' => ['nullable', 'string', 'in:' . implode(',', $this->genders)],
+             'address' => ['nullable', 'string', 'max:255'],
+             'city' => ['nullable', 'string', 'max:255'],
+             'district' => ['nullable', 'string', 'max:255'],
+             'id_document_type' => ['nullable', 'string', 'in:' . implode(',', $this->idDocumentTypes)],
+             'id_document_number' => ['nullable', 'string', 'max:100'],
+             'photo' => ['nullable', 'image', 'max:2048'],
 
          ], $messages);
+
+         if (request()->hasFile('photo')) {
+             $file = request()->file('photo');
+             $filename = 'photo_' . time() . '.' . $file->getClientOriginalExtension();
+             Storage::disk('public')->put($filename, file_get_contents($file));
+             $request['photo'] = $filename;
+         }
 
          $agent = User::create([
              'first_name' => $request['first_name'],
@@ -55,8 +73,20 @@ class AgentController extends Controller
              'password' => Hash::make($request['password']),
              'company_id'=> auth()->user()->company_id,
              'status' => 'pending',
+             'date_of_birth' => $request['date_of_birth'] ?? null,
+             'gender' => $request['gender'] ?? null,
+             'address' => $request['address'] ?? null,
+             'city' => $request['city'] ?? null,
+             'district' => $request['district'] ?? null,
+             'id_document_type' => $request['id_document_type'] ?? null,
+             'id_document_number' => $request['id_document_number'] ?? null,
+             'photo' => $request['photo'] ?? null,
          ]);
          $agent->assignRole('agent');
+
+         activity()->causedBy(auth()->user())->performedOn($agent)
+             ->withProperties(['subject_name' => $agent->full_name()])
+             ->log('Agent créé');
 
          return redirect()->route('agents.index')
              ->with('success', 'Agent a été créée avec succès. Il doit être validé avant de pouvoir se connecter.');
@@ -79,6 +109,10 @@ class AgentController extends Controller
 
          $agent->update(['status' => 'validated']);
 
+         activity()->causedBy(auth()->user())->performedOn($agent)
+             ->withProperties(['subject_name' => $agent->full_name()])
+             ->log('Agent validé');
+
          return redirect()->route('agents.index')->with('success', 'Agent validé avec succès.');
      }
 
@@ -87,6 +121,10 @@ class AgentController extends Controller
          abort_unless($this->canModerate($agent), 403);
 
          $agent->update(['status' => 'rejected']);
+
+         activity()->causedBy(auth()->user())->performedOn($agent)
+             ->withProperties(['subject_name' => $agent->full_name()])
+             ->log('Agent rejeté');
 
          return redirect()->route('agents.index')->with('success', 'Agent rejeté.');
      }
@@ -111,15 +149,40 @@ class AgentController extends Controller
              'last_name' => ['required', 'string', 'max:255'],
              'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($agent->id)],
              'phone_number' => ['required', 'string',],
+             'date_of_birth' => ['nullable', 'date'],
+             'gender' => ['nullable', 'string', 'in:' . implode(',', $this->genders)],
+             'address' => ['nullable', 'string', 'max:255'],
+             'city' => ['nullable', 'string', 'max:255'],
+             'district' => ['nullable', 'string', 'max:255'],
+             'id_document_type' => ['nullable', 'string', 'in:' . implode(',', $this->idDocumentTypes)],
+             'id_document_number' => ['nullable', 'string', 'max:100'],
+             'photo' => ['nullable', 'image', 'max:2048'],
          ],
           $messages
          );
+
+         if (request()->hasFile('photo')) {
+             $file = request()->file('photo');
+             $filename = 'photo_' . time() . '.' . $file->getClientOriginalExtension();
+             Storage::disk('public')->put($filename, file_get_contents($file));
+             $request['photo'] = $filename;
+         } else {
+             unset($request['photo']);
+         }
 
          $agent->update([
              'first_name' => $request['first_name'],
              'last_name' => $request['last_name'],
              'email' => $request['email'],
-             'phone_number' => $request['phone_number']
+             'phone_number' => $request['phone_number'],
+             'date_of_birth' => $request['date_of_birth'] ?? null,
+             'gender' => $request['gender'] ?? null,
+             'address' => $request['address'] ?? null,
+             'city' => $request['city'] ?? null,
+             'district' => $request['district'] ?? null,
+             'id_document_type' => $request['id_document_type'] ?? null,
+             'id_document_number' => $request['id_document_number'] ?? null,
+             ...(isset($request['photo']) ? ['photo' => $request['photo']] : []),
          ]);
             return redirect()->route('agents.index')->with('success', 'Agent modifié avec succès.');
 
@@ -127,6 +190,10 @@ class AgentController extends Controller
 
      public function destroy(User $agent)
      {
+         activity()->causedBy(auth()->user())->performedOn($agent)
+             ->withProperties(['subject_name' => $agent->full_name()])
+             ->log('Agent supprimé');
+
          $agent->delete();
 
          return redirect()->route('agents.index')->with('success','Agent deleted successfully');

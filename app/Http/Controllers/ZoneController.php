@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Zone;
+use App\Models\Country;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 
@@ -12,18 +13,15 @@ class ZoneController extends Controller
     public function index()
     {
         if (auth()->user()->hasRole('manager')) {
-            $zones = Zone::where('company_id', auth()->user()->company_id)->paginate(5);
+            $zones = Zone::with('administrativeDivision')->where('company_id', auth()->user()->company_id)->paginate(5);
         } else {
-            $zones = Zone::latest()->paginate(10);
+            $zones = Zone::with('administrativeDivision')->latest()->paginate(10);
         }
 
-        return view('pages.zones.index', compact('zones'))
-            ->with('i', (request()->input('page', 1) - 1) * 5);
-    }
+        $countries = Country::orderBy('name')->get();
 
-    public function create()
-    {
-        return view('pages.zones.create');
+        return view('pages.zones.index', compact('zones', 'countries'))
+            ->with('i', (request()->input('page', 1) - 1) * 5);
     }
 
     public function store(Request $request): RedirectResponse
@@ -37,6 +35,7 @@ class ZoneController extends Controller
             'northeast_longitude' => 'required',
             'southwest_latitude' => 'required',
             'southwest_longitude' => 'required',
+            'administrative_division_id' => ['nullable', 'exists:administrative_divisions,id'],
         ]);
         $request->merge(['company_id' => auth()->user()->company_id]);
         Zone::create($request->all());
@@ -51,11 +50,6 @@ class ZoneController extends Controller
     }
 
 
-    public function edit(Zone $zone)
-    {
-        return view('pages.zones.edit',compact('zone'));
-    }
-
     public function update(Request $request, Zone $zone)
     {
         $request->validate([
@@ -66,6 +60,7 @@ class ZoneController extends Controller
             'northeast_longitude' => 'required',
             'southwest_latitude' => 'required',
             'southwest_longitude' => 'required',
+            'administrative_division_id' => ['nullable', 'exists:administrative_divisions,id'],
 
         ]);
 

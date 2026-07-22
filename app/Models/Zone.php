@@ -27,8 +27,14 @@ class Zone extends Model
         'southwest_latitude',
         'southwest_longitude',
         'color',
-        'company_id'
+        'company_id',
+        'administrative_division_id',
     ];
+
+    public function administrativeDivision(): BelongsTo
+    {
+        return $this->belongsTo(AdministrativeDivision::class);
+    }
 
     /**
      * Get the options for generating the slug.

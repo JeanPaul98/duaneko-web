@@ -52,6 +52,38 @@ class LoginController extends Controller
                 ->withInput($request->only('email', 'remember'))
                 ->withErrors(['email' => $this->accountStatusMessage($user->status)]);
         }
+
+        if (!$user->hasRole('citizen')) {
+            activity()
+                ->causedBy($user)
+                ->withProperties(['ip' => $request->ip()])
+                ->log('Connexion');
+        }
+    }
+
+    /**
+     * Journalise la déconnexion (staff uniquement) avant d'invalider la session.
+     */
+    public function logout(Request $request)
+    {
+        $user = $this->guard()->user();
+
+        if ($user && !$user->hasRole('citizen')) {
+            activity()->causedBy($user)->log('Déconnexion');
+        }
+
+        $this->guard()->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        if ($response = $this->loggedOut($request)) {
+            return $response;
+        }
+
+        return $request->wantsJson()
+            ? new \Illuminate\Http\JsonResponse([], 204)
+            : redirect('/');
     }
 
     private function accountStatusMessage(string $status): string

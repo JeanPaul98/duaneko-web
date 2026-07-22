@@ -8,9 +8,10 @@
                 <div class="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
                     <div>
                         <div class="sm:mb-8 text-center">
-                            <img src="{{ asset('images/logo/duaneko_logo.png') }}" class="mx-auto h-50 w-auto">
+                            <img src="{{ asset('images/logo/duaneko_logo.png') }}" alt="Duneko" class="mx-auto h-20 w-20 rounded-2xl object-cover">
 
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                            <h1 class="mt-4 text-xl font-semibold text-gray-800 dark:text-white/90">Duneko</h1>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                 Connectez-vous à votre espace Duneko
                             </p>
                         </div>
@@ -137,6 +138,17 @@
                             </div>
                         </form>
                     </div>
+                </div>
+            </div>
+
+            <!-- Branding panel -->
+            <div class="hidden w-full items-center justify-center bg-gray-900 lg:flex lg:w-1/2 dark:bg-white/5">
+                <div class="flex max-w-xs flex-col items-center text-center">
+                    <img src="{{ asset('images/logo/duaneko_logo.png') }}" alt="Duneko" class="h-40 w-40 rounded-3xl object-cover shadow-lg">
+                    <h2 class="mt-6 text-2xl font-semibold text-white">Duneko</h2>
+                    <p class="mt-2 text-sm text-gray-400">
+                        Propreté urbaine, tri intelligent et économie circulaire — plateforme citoyenne pour les mairies et leurs équipes.
+                    </p>
                 </div>
             </div>
 

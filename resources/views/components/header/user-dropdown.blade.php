@@ -107,8 +107,8 @@
 </div>
 
 <!-- Modale Modifier mon profil -->
-<x-ui.modal x-data="{ open: {{ old('_editing_profile') ? 'true' : 'false' }} }"
-    @open-edit-profile-modal.window="open = true" :isOpen="false" class="max-w-[600px]">
+<x-ui.modal
+    @open-edit-profile-modal.window="open = true" :isOpen="old('_editing_profile') ? true : false" class="max-w-[600px]">
     <div class="relative w-full max-w-[600px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
         <h4 class="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90">Modifier mon profil</h4>
 
