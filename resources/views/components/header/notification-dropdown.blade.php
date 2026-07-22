@@ -1,20 +1,17 @@
 {{-- Notification Dropdown Component --}}
 <div class="relative" x-data="{
     dropdownOpen: false,
-    notifying: true,
+    notifying: @json(($pendingReportsCount ?? 0) > 0),
     toggleDropdown() {
         this.dropdownOpen = !this.dropdownOpen;
-        this.notifying = false;
     },
     closeDropdown() {
         this.dropdownOpen = false;
     },
     handleItemClick() {
-        console.log('Notification item clicked');
         this.closeDropdown();
     },
     handleViewAllClick() {
-        console.log('View All Notifications clicked');
         this.closeDropdown();
     }
 }" @click.away="closeDropdown()">
@@ -24,15 +21,11 @@
         @click="toggleDropdown()"
         type="button"
     >
-        <!-- Notification Badge -->
+        <!-- Notification Badge (nombre de signalisations en attente) -->
         <span
             x-show="notifying"
-            class="absolute right-0 top-0.5 z-1 h-2 w-2 rounded-full bg-orange-400"
-        >
-            <span
-                class="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 -z-1 animate-ping"
-            ></span>
-        </span>
+            class="absolute -right-1 -top-1 z-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-semibold leading-none text-white"
+        >{{ $pendingReportsCount ?? 0 }}</span>
 
         <!-- Bell Icon -->
         <svg
@@ -66,7 +59,9 @@
     >
         <!-- Dropdown Header -->
         <div class="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-800">
-            <h5 class="text-lg font-semibold text-gray-800 dark:text-white/90">Notification</h5>
+            <h5 class="text-lg font-semibold text-gray-800 dark:text-white/90">
+                {{ ($notificationType ?? 'reports') === 'ramassages' ? 'Ramassages assignés' : 'Signalements en attente' }}
+            </h5>
 
             <button @click="closeDropdown()" class="text-gray-500 dark:text-gray-400" type="button">
                 <svg
@@ -87,136 +82,106 @@
             </button>
         </div>
 
-        <!-- Notification List -->
-        <ul class="flex flex-col h-auto overflow-y-auto custom-scrollbar">
-            @php
-                $notifications = [
-                    [
-                        'id' => 1,
-                        'userName' => 'Terry Franci',
-                        'userImage' => '/images/user/user-02.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Nganter App',
-                        'type' => 'Project',
-                        'time' => '5 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 2,
-                        'userName' => 'Alex Johnson',
-                        'userImage' => '/images/user/user-03.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Nganter App',
-                        'type' => 'Project',
-                        'time' => '10 min ago',
-                        'status' => 'offline',
-                    ],
-                    [
-                        'id' => 3,
-                        'userName' => 'Sarah Williams',
-                        'userImage' => '/images/user/user-04.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Dashboard UI',
-                        'type' => 'Project',
-                        'time' => '15 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 4,
-                        'userName' => 'Mike Brown',
-                        'userImage' => '/images/user/user-05.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - E-commerce',
-                        'type' => 'Project',
-                        'time' => '20 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 5,
-                        'userName' => 'Emma Davis',
-                        'userImage' => '/images/user/user-06.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Mobile App',
-                        'type' => 'Project',
-                        'time' => '25 min ago',
-                        'status' => 'offline',
-                    ],
-                    [
-                        'id' => 6,
-                        'userName' => 'John Smith',
-                        'userImage' => '/images/user/user-07.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Landing Page',
-                        'type' => 'Project',
-                        'time' => '30 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 7,
-                        'userName' => 'Lisa Anderson',
-                        'userImage' => '/images/user/user-08.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Blog System',
-                        'type' => 'Project',
-                        'time' => '35 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 8,
-                        'userName' => 'David Wilson',
-                        'userImage' => '/images/user/user-09.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - CRM Dashboard',
-                        'type' => 'Project',
-                        'time' => '40 min ago',
-                        'status' => 'online',
-                    ],
-                ];
-            @endphp
-
-            @foreach ($notifications as $notification)
-                <li @click="handleItemClick()">
-                    <a
-                        class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
-                        href="#"
-                    >
-                        <span class="relative block w-full h-10 rounded-full z-1 max-w-10">
-                            <img src="{{ $notification['userImage'] }}" alt="User" class="overflow-hidden rounded-full" />
-                            <span
-                                class="absolute bottom-0 right-0 z-10 h-2.5 w-full max-w-2.5 rounded-full border-[1.5px] border-white dark:border-gray-900 {{ $notification['status'] === 'online' ? 'bg-success-500' : 'bg-error-500' }}"
-                            ></span>
-                        </span>
-
-                        <span class="block">
-                            <span class="mb-1.5 block text-theme-sm text-gray-500 dark:text-gray-400">
-                                <span class="font-medium text-gray-800 dark:text-white/90">
-                                    {{ $notification['userName'] }}
-                                </span>
-                                {{ $notification['action'] }}
-                                <span class="font-medium text-gray-800 dark:text-white/90">
-                                    {{ $notification['project'] }}
-                                </span>
+        @if (($notificationType ?? 'reports') === 'ramassages')
+            <!-- Notification List (ramassages assignés) -->
+            <ul class="flex flex-col h-auto overflow-y-auto custom-scrollbar">
+                @forelse (($assignedRamassages ?? []) as $ramassage)
+                    <li @click="handleItemClick()">
+                        <a
+                            class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
+                            href="{{ route('ramassages.show', $ramassage) }}"
+                        >
+                            <span class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-500/15">
+                                <svg class="fill-brand-500" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M10 1.667c.46 0 .833.373.833.833v7.5a.833.833 0 1 1-1.666 0v-7.5c0-.46.373-.833.833-.833Zm0 12.5a1.042 1.042 0 1 1 0 2.083 1.042 1.042 0 0 1 0-2.083Z" fill=""/>
+                                </svg>
                             </span>
 
-                            <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
-                                <span>{{ $notification['type'] }}</span>
-                                <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                <span>{{ $notification['time'] }}</span>
-                            </span>
-                        </span>
-                    </a>
-                </li>
-            @endforeach
-        </ul>
+                            <span class="block">
+                                <span class="mb-1.5 block text-theme-sm text-gray-500 dark:text-gray-400">
+                                    Vous êtes affecté au ramassage
+                                    <span class="font-medium text-gray-800 dark:text-white/90">
+                                        {{ $ramassage->name }}
+                                    </span>
+                                </span>
 
-        <!-- View All Button -->
-        <a
-            href="#"
-            class="mt-3 flex justify-center rounded-lg border border-gray-300 bg-white p-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
-            @click.prevent="handleViewAllClick()"
-        >
-            View All Notification
-        </a>
+                                <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
+                                    <span>{{ $ramassage->date_de_ramassage }}</span>
+                                    <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                    <span>{{ $ramassage->heure_de_ramassage }}</span>
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                @empty
+                    <li class="p-4 text-center text-theme-sm text-gray-500 dark:text-gray-400">
+                        Aucun ramassage assigné
+                    </li>
+                @endforelse
+            </ul>
+
+            <!-- View All Button -->
+            <a
+                href="{{ route('ramassages.index') }}"
+                class="mt-3 flex justify-center rounded-lg border border-gray-300 bg-white p-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+                @click="handleViewAllClick()"
+            >
+                Voir tous mes ramassages assignés
+            </a>
+        @else
+            <!-- Notification List (signalements en attente) -->
+            <ul class="flex flex-col h-auto overflow-y-auto custom-scrollbar">
+                @php
+                    $reportTypeLabels = ['wild_dumps' => 'Dépôt sauvage'];
+                @endphp
+
+                @forelse (($pendingReports ?? []) as $report)
+                    <li @click="handleItemClick()">
+                        <a
+                            class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
+                            href="{{ route('reports.show', $report) }}"
+                        >
+                            <span class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-500/15">
+                                <svg class="fill-orange-500" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M10 1.667c.46 0 .833.373.833.833v7.5a.833.833 0 1 1-1.666 0v-7.5c0-.46.373-.833.833-.833Zm0 12.5a1.042 1.042 0 1 1 0 2.083 1.042 1.042 0 0 1 0-2.083Z" fill=""/>
+                                </svg>
+                            </span>
+
+                            <span class="block">
+                                <span class="mb-1.5 block text-theme-sm text-gray-500 dark:text-gray-400">
+                                    <span class="font-medium text-gray-800 dark:text-white/90">
+                                        {{ $report->user ? $report->user->full_name() : 'Signalement anonyme' }}
+                                    </span>
+                                    a signalé
+                                    <span class="font-medium text-gray-800 dark:text-white/90">
+                                        {{ $reportTypeLabels[$report->type] ?? $report->type }}
+                                    </span>
+                                </span>
+
+                                <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
+                                    <span>En attente</span>
+                                    <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                    <span>{{ $report->created_at->diffForHumans() }}</span>
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                @empty
+                    <li class="p-4 text-center text-theme-sm text-gray-500 dark:text-gray-400">
+                        Aucun signalement en attente
+                    </li>
+                @endforelse
+            </ul>
+
+            <!-- View All Button -->
+            <a
+                href="{{ route('reports.index', ['status' => 'pending']) }}"
+                class="mt-3 flex justify-center rounded-lg border border-gray-300 bg-white p-3 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+                @click="handleViewAllClick()"
+            >
+                Voir tous les signalements en attente
+            </a>
+        @endif
     </div>
     <!-- Dropdown End -->
 </div>

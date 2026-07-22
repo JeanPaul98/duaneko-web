@@ -64,21 +64,59 @@
 
                     </div>
 
-                    @if ($canModerate)
+                    @if ($report->ramassage)
                         <div class="mt-6 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
-                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Envoyer à un agent</label>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Agent assigné</p>
+                            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $report->ramassage->agent?->full_name() ?? '—' }}</p>
+
+                            <div class="mt-3 grid grid-cols-1 gap-2">
+                                <a href="https://www.google.com/maps/dir/?api=1&destination={{ $report->latitude }},{{ $report->longitude }}"
+                                    target="_blank" rel="noopener"
+                                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-theme-sm font-medium text-white hover:bg-brand-600">
+                                    Itinéraire vers le lieu
+                                </a>
+                                <a href="{{ route('ramassages.show', $report->ramassage) }}"
+                                    class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-theme-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]">
+                                    Voir le ramassage
+                                </a>
+                            </div>
+
+                            @if ($canModerate && $agents->isNotEmpty())
+                                <form method="POST" action="{{ route('reports.assign', $report) }}" class="mt-4">
+                                    @csrf
+                                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Réaffecter à un autre agent</label>
+                                    <select name="agent_id" class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                        @foreach ($agents as $agent)
+                                            <option value="{{ $agent->id }}" @selected($report->ramassage->agent_id == $agent->id)>{{ $agent->full_name() }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="mt-3 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]">Réaffecter</button>
+                                </form>
+                            @endif
+                        </div>
+                    @elseif ($canModerate)
+                        <div class="mt-6 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Assigner un agent</label>
 
                             @if ($agents->isEmpty())
                                 <p class="text-theme-xs text-gray-400 dark:text-gray-500">Aucun agent disponible pour ce signalement (zone non couverte ou aucun agent enregistré).</p>
                             @else
-                                <select id="report-agent-select" class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
-                                    <option value="">Choisir un agent…</option>
-                                    @foreach ($agents as $agent)
-                                        <option value="{{ $agent->id }}" data-whatsapp="{{ $agent->whatsapp_url }}" data-mailto="{{ $agent->mailto_url }}">{{ $agent->full_name() }}</option>
-                                    @endforeach
-                                </select>
+                                <form method="POST" action="{{ route('reports.assign', $report) }}">
+                                    @csrf
+                                    <select id="report-agent-select" name="agent_id" class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                        <option value="">Choisir un agent…</option>
+                                        @foreach ($agents as $agent)
+                                            <option value="{{ $agent->id }}" data-whatsapp="{{ $agent->whatsapp_url }}" data-mailto="{{ $agent->mailto_url }}">{{ $agent->full_name() }}</option>
+                                        @endforeach
+                                    </select>
 
-                                <div class="mt-3 grid grid-cols-2 gap-2">
+                                    <button type="submit" class="mt-3 w-full rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600">
+                                        Assigner (crée le ramassage avec les coordonnées GPS du signalement)
+                                    </button>
+                                </form>
+
+                                <p class="mt-3 mb-1.5 text-xs text-gray-500 dark:text-gray-400">Ou contacter directement l'agent avant assignation :</p>
+                                <div class="grid grid-cols-2 gap-2">
                                     <button type="button" id="report-send-whatsapp" disabled
                                         class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-theme-sm font-medium text-gray-400 dark:border-gray-700">
                                         WhatsApp
@@ -90,7 +128,9 @@
                                 </div>
                             @endif
                         </div>
+                    @endif
 
+                    @if ($canModerate)
                         <form method="POST" action="{{ route('reports.update', $report) }}" class="mt-6 border-t border-gray-100 pt-5 dark:border-white/[0.05]">
                             @csrf
                             @method('PUT')
@@ -118,9 +158,9 @@
             const lng = {{ $report->longitude }};
             const map = L.map('report-map').setView([lat, lng], 15);
 
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
             }).addTo(map);
 
             L.marker([lat, lng]).addTo(map);

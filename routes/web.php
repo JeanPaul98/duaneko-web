@@ -65,8 +65,10 @@ Route::middleware('auth')->group(function () {
     // Création/édition en modale.
     Route::resource('ramassages', RamassageController::class)->except(['index', 'show', 'create', 'edit'])->middleware('role:manager');
     Route::resource('ramassages', RamassageController::class)->only(['index', 'show'])->middleware('role:admin|manager|agent');
+    Route::post('ramassages/{ramassage}/complete', [RamassageController::class, 'complete'])->name('ramassages.complete')->middleware('role:admin|manager|agent');
 
     Route::resource('reports', ReportController::class)->only(['index', 'show', 'update']);
+    Route::post('reports/{report}/assign', [ReportController::class, 'assign'])->name('reports.assign')->middleware('role:admin|manager');
 
     // Paramètres : configuration multi-pays (admin uniquement).
     Route::prefix('parametres')->name('parametres.')->middleware('role:admin')->group(function () {

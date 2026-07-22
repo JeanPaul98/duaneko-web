@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Ramassage extends Model
 {
@@ -26,7 +25,9 @@ class Ramassage extends Model
         'date_de_ramassage',
         'heure_de_ramassage',
         'description',
-        'company_id'
+        'company_id',
+        'report_id',
+        'agent_id',
     ];
 
     /**
@@ -39,8 +40,13 @@ class Ramassage extends Model
             ->saveSlugsTo('slug');
     }
 
-    public function agents(): BelongsToMany
+    public function agent(): BelongsTo
     {
-        return $this->belongsToMany(User::class, 'ramassages_agents', 'ramassage_id', 'agent_id');
+        return $this->belongsTo(User::class, 'agent_id');
+    }
+
+    public function report(): BelongsTo
+    {
+        return $this->belongsTo(Report::class);
     }
 }

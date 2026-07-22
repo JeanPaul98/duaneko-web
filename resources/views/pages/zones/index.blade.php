@@ -68,8 +68,8 @@
 
                             <!-- Modale de modification de la zone #{{ $zone->id }} -->
                             <x-ui.modal
-                                @open-edit-zone-modal.window="if ($event.detail.id === {{ $zone->id }}) open = true" :isOpen="old('_editing_zone') == $zone->id" class="max-w-[700px]">
-                                <div class="relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
+                                @open-edit-zone-modal.window="if ($event.detail.id === {{ $zone->id }}) open = true" :isOpen="old('_editing_zone') == $zone->id" class="max-w-[1100px]">
+                                <div class="relative w-full max-w-[1100px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
                                     <h4 class="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90">Modifier la zone</h4>
                                     <form method="POST" action="{{ route('zones.update', $zone) }}">
                                         @csrf
@@ -106,7 +106,7 @@
                                             </div>
                                         </div>
                                         <p class="mt-4 mb-1.5 text-sm text-gray-500 dark:text-gray-400">Recherchez une adresse pour délimiter la zone sur la carte (facultatif — laissez tel quel pour garder les limites actuelles).</p>
-                                        <div id="map-zone-edit-{{ $zone->id }}" class="rounded-lg" style="height: 40vh;"></div>
+                                        <div id="map-zone-edit-{{ $zone->id }}" class="rounded-lg" style="height: 60vh;"></div>
                                         <input type="hidden" id="zone-edit-{{ $zone->id }}-northeast_latitude" name="northeast_latitude" value="{{ $zone->northeast_latitude }}">
                                         <input type="hidden" id="zone-edit-{{ $zone->id }}-northeast_longitude" name="northeast_longitude" value="{{ $zone->northeast_longitude }}">
                                         <input type="hidden" id="zone-edit-{{ $zone->id }}-southwest_latitude" name="southwest_latitude" value="{{ $zone->southwest_latitude }}">
@@ -135,8 +135,8 @@
 
     <!-- Modale de création d'une zone -->
     <x-ui.modal
-        @open-create-zone-modal.window="open = true" :isOpen="old('_creating_zone') ? true : false" class="max-w-[700px]">
-        <div class="relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
+        @open-create-zone-modal.window="open = true" :isOpen="old('_creating_zone') ? true : false" class="max-w-[1100px]">
+        <div class="relative w-full max-w-[1100px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
             <h4 class="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90">Ajouter une zone</h4>
             <form method="POST" action="{{ route('zones.store') }}">
                 @csrf
@@ -169,11 +169,12 @@
                     </div>
                 </div>
                 <p class="mt-4 mb-1.5 text-sm text-gray-500 dark:text-gray-400">Recherchez une adresse pour délimiter la zone sur la carte.</p>
-                <div id="map-zone-create" class="rounded-lg" style="height: 40vh;"></div>
+                <div id="map-zone-create" class="rounded-lg" style="height: 60vh;"></div>
                 <input type="hidden" id="zone-create-northeast_latitude" name="northeast_latitude">
                 <input type="hidden" id="zone-create-northeast_longitude" name="northeast_longitude">
                 <input type="hidden" id="zone-create-southwest_latitude" name="southwest_latitude">
                 <input type="hidden" id="zone-create-southwest_longitude" name="southwest_longitude">
+                
                 <input type="hidden" id="zone-create-google_map_name" name="google_map_name">
                 @error('northeast_latitude') <p class="mt-1.5 text-sm text-red-500">Veuillez délimiter la zone sur la carte.</p> @enderror
                 <div class="mt-6 flex items-center justify-end gap-3">
@@ -202,11 +203,11 @@
                 if (!mapEl) return;
 
                 let currentPolygon = null;
-                const map = L.map(mapId, { scrollWheelZoom: false }).setView([6.1319, 1.2228], 12);
+                const map = L.map(mapId, { scrollWheelZoom: true }).setView([6.1319, 1.2228], 12);
 
-                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                     maxZoom: 19,
-                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
                 }).addTo(map);
 
                 if (initialBounds) {

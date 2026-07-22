@@ -38,6 +38,7 @@
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Date</th>
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Heure</th>
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Agents</th>
+                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Statut</th>
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Action</th>
                         </tr>
                     </thead>
@@ -48,9 +49,14 @@
                                 <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->date_de_ramassage }}</td>
                                 <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->heure_de_ramassage }}</td>
                                 <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">
-                                    @foreach ($ramassage->agents as $agent)
-                                        <div>{{ $agent->full_name() }}</div>
-                                    @endforeach
+                                    {{ $ramassage->agent?->full_name() ?? '—' }}
+                                </td>
+                                <td class="px-6 py-3.5">
+                                    @if ($ramassage->agent_id)
+                                        <span class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-theme-xs font-medium text-green-700 dark:bg-green-500/15 dark:text-green-500">Assigné</span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-theme-xs font-medium text-gray-600 dark:bg-white/5 dark:text-gray-400">Non assigné</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-3.5">
                                     <div class="flex flex-wrap items-center gap-2">
@@ -73,8 +79,8 @@
                             @if (auth()->user()->hasRole('manager'))
                                 <!-- Modale de modification du ramassage #{{ $ramassage->id }} -->
                                 <x-ui.modal
-                                    @open-edit-ramassage-modal.window="if ($event.detail.id === {{ $ramassage->id }}) open = true" :isOpen="old('_editing_ramassage') == $ramassage->id" class="max-w-[700px]">
-                                    <div class="relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
+                                    @open-edit-ramassage-modal.window="if ($event.detail.id === {{ $ramassage->id }}) open = true" :isOpen="old('_editing_ramassage') == $ramassage->id" class="max-w-[1100px]">
+                                    <div class="relative w-full max-w-[1100px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
                                         <h4 class="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90">Modifier le ramassage</h4>
                                         <form method="POST" action="{{ route('ramassages.update', $ramassage) }}">
                                             @csrf
@@ -102,19 +108,17 @@
                                                     @error('description') <p class="mt-1.5 text-sm text-red-500">{{ $message }}</p> @enderror
                                                 </div>
                                                 <div class="sm:col-span-2">
-                                                    <label class="{{ $labelClass }}">Agents à affecter</label>
-                                                    <div class="flex flex-wrap gap-4">
+                                                    <label class="{{ $labelClass }}">Agent à affecter</label>
+                                                    <select name="agent_id" class="{{ $inputClass }}">
+                                                        <option value="">— Aucun —</option>
                                                         @foreach ($agents as $agent)
-                                                            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-400">
-                                                                <input type="checkbox" name="agents[]" value="{{ $agent->id }}" {{ $ramassage->agents->contains($agent->id) ? 'checked' : '' }}>
-                                                                {{ $agent->full_name() }}
-                                                            </label>
+                                                            <option value="{{ $agent->id }}" @selected($ramassage->agent_id == $agent->id)>{{ $agent->full_name() }}</option>
                                                         @endforeach
-                                                    </div>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <p class="mt-4 mb-1.5 text-sm text-gray-500 dark:text-gray-400">Cliquez sur la carte pour repositionner le point de ramassage (facultatif).</p>
-                                            <div id="map-ramassage-edit-{{ $ramassage->id }}" class="rounded-lg" style="height: 40vh;"></div>
+                                            <div id="map-ramassage-edit-{{ $ramassage->id }}" class="rounded-lg" style="height: 60vh;"></div>
                                             <input type="hidden" id="ramassage-edit-{{ $ramassage->id }}-latitude" name="latitude" value="{{ $ramassage->latitude }}">
                                             <input type="hidden" id="ramassage-edit-{{ $ramassage->id }}-longitude" name="longitude" value="{{ $ramassage->longitude }}">
                                             <div class="mt-6 flex items-center justify-end gap-3">
@@ -141,8 +145,8 @@
     @if (auth()->user()->hasRole('manager'))
         <!-- Modale de création d'un ramassage -->
         <x-ui.modal
-            @open-create-ramassage-modal.window="open = true" :isOpen="old('_creating_ramassage') ? true : false" class="max-w-[700px]">
-            <div class="relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
+            @open-create-ramassage-modal.window="open = true" :isOpen="old('_creating_ramassage') ? true : false" class="max-w-[1100px]">
+            <div class="relative w-full max-w-[1100px] overflow-y-auto rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-8">
                 <h4 class="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90">Ajouter un ramassage</h4>
                 <form method="POST" action="{{ route('ramassages.store') }}">
                     @csrf
@@ -169,19 +173,17 @@
                             @error('description') <p class="mt-1.5 text-sm text-red-500">{{ $message }}</p> @enderror
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="{{ $labelClass }}">Agents à affecter</label>
-                            <div class="flex flex-wrap gap-4">
+                            <label class="{{ $labelClass }}">Agent à affecter</label>
+                            <select name="agent_id" class="{{ $inputClass }}">
+                                <option value="">— Aucun —</option>
                                 @foreach ($agents as $agent)
-                                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-400">
-                                        <input type="checkbox" name="agents[]" value="{{ $agent->id }}">
-                                        {{ $agent->full_name() }}
-                                    </label>
+                                    <option value="{{ $agent->id }}">{{ $agent->full_name() }}</option>
                                 @endforeach
-                            </div>
+                            </select>
                         </div>
                     </div>
                     <p class="mt-4 mb-1.5 text-sm text-gray-500 dark:text-gray-400">Cliquez sur la carte pour placer le point de ramassage.</p>
-                    <div id="map-ramassage-create" class="rounded-lg" style="height: 40vh;"></div>
+                    <div id="map-ramassage-create" class="rounded-lg" style="height: 60vh;"></div>
                     <input type="hidden" id="ramassage-create-latitude" name="latitude">
                     <input type="hidden" id="ramassage-create-longitude" name="longitude">
                     @error('latitude') <p class="mt-1.5 text-sm text-red-500">Veuillez cliquer sur la carte pour placer le point.</p> @enderror
@@ -210,14 +212,14 @@
                 const mapEl = document.getElementById(mapId);
                 if (!mapEl) return;
 
-                const map = L.map(mapId, { scrollWheelZoom: false }).setView(
+                const map = L.map(mapId, { scrollWheelZoom: true }).setView(
                     initialLatLng ? [initialLatLng.lat, initialLatLng.lng] : [6.1319, 1.2228],
                     initialLatLng ? 15 : 12
                 );
 
-                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                     maxZoom: 19,
-                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
                 }).addTo(map);
 
                 let marker = null;

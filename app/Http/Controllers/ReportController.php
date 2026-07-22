@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ramassage;
 use App\Models\Report;
 use App\Models\User;
 use App\Models\Zone;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -80,6 +82,42 @@ class ReportController extends Controller
         return view('pages.reports.show', compact('report', 'agents'));
     }
 
+    /**
+     * Assigne un agent à un signalement : crée (ou met à jour) le ramassage
+     * lié en reprenant directement les coordonnées GPS du signalement, sans
+     * que le manager ait besoin de les ressaisir sur une carte.
+     */
+    public function assign(Request $request, Report $report): RedirectResponse
+    {
+        abort_unless($this->canModerate($report), 403);
+
+        $request->validate([
+            'agent_id' => ['required', 'exists:users,id'],
+        ]);
+
+        $typeLabels = ['wild_dumps' => 'Dépôt sauvage'];
+
+        $ramassage = $report->ramassage ?: new Ramassage([
+            'date_de_ramassage' => now()->toDateString(),
+            'heure_de_ramassage' => now()->format('H:i'),
+        ]);
+
+        $ramassage->fill([
+            'report_id' => $report->id,
+            'name' => ($typeLabels[$report->type] ?? $report->type) . ' - ' . $report->description,
+            'latitude' => $report->latitude,
+            'longitude' => $report->longitude,
+            'description' => $report->description,
+            'company_id' => auth()->user()->company_id,
+            'agent_id' => $request->agent_id,
+        ]);
+        $ramassage->save();
+
+        $report->update(['status' => 'in_progress']);
+
+        return redirect()->route('reports.show', $report)->with('success', 'Agent assigné : le ramassage a été créé avec les coordonnées du signalement.');
+    }
+
     private function buildAgentMessage(Report $report): string
     {
         $typeLabels = ['wild_dumps' => 'Dépôt sauvage'];
@@ -109,6 +147,32 @@ class ReportController extends Controller
         $report->update(['status' => $request->status]);
 
         return redirect()->route('reports.show', $report)->with('success', 'Statut du signalement mis à jour avec succès.');
+    }
+
+    public function pendingReportsQuery(User $user)
+    {
+        $isAdmin = $user->hasRole('admin');
+        $zones = $isAdmin ? Zone::all() : Zone::where('company_id', $user->company_id)->get();
+
+        $query = Report::where('status', 'pending');
+
+        if (!$isAdmin) {
+            if ($zones->isEmpty()) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->where(function ($q) use ($zones) {
+                    foreach ($zones as $zone) {
+                        [$latMin, $latMax, $lngMin, $lngMax] = $this->zoneBounds($zone);
+                        $q->orWhere(function ($qq) use ($latMin, $latMax, $lngMin, $lngMax) {
+                            $qq->whereBetween('latitude', [$latMin, $latMax])
+                                ->whereBetween('longitude', [$lngMin, $lngMax]);
+                        });
+                    }
+                });
+            }
+        }
+
+        return $query;
     }
 
     private function zoneBounds(Zone $zone): array

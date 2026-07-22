@@ -1,119 +1,130 @@
-@extends('layouts.admin')
+@extends('layouts.app')
+
+@push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+        #ramassage-map { height: 400px; }
+    </style>
+@endpush
 
 @section('content')
-<div class="pc-container">
-    <div class="pcoded-content">
-        <!-- [ breadcrumb ] start -->
-        <div class="page-header">
-            <div class="page-block">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <div class="page-header-title">
-                            <h5 class="m-b-10">Ramassages</h5>
-                        </div>
-                        <ul class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="index.html">Ramassages</a></li>
-                            <li class="breadcrumb-item">Modifier le ramassage {{ $ramassage -> name}}</li>
-                        </ul>
-                    </div>
+    <x-common.page-breadcrumb pageTitle="Détail du ramassage" />
+
+    <div class="space-y-6">
+        @if ($message = Session::get('success'))
+            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                {{ $message }}
+            </div>
+        @endif
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div class="lg:col-span-2">
+                <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]">
+                    <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">Localisation</h3>
+                    <div id="ramassage-map" class="rounded-lg"></div>
                 </div>
             </div>
-        </div>
 
-        <div class="row">
-            <div class="col-xl-12 col-md-12">
+            <div>
+                <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]">
+                    <h4 class="mb-4 text-xl font-semibold text-gray-800 dark:text-white/90">{{ $ramassage->name }}</h4>
 
-                <div class="card">
-
-                    <div class="card-header">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Date</p>
+                                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->date_de_ramassage }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Heure</p>
+                                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->heure_de_ramassage }}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Description</p>
+                            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->description }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Agent affecté</p>
+                            @if ($ramassage->agent)
+                                <x-ui.badge color="success">{{ $ramassage->agent->full_name() }}</x-ui.badge>
+                            @else
+                                <x-ui.badge color="light">Non assigné</x-ui.badge>
+                            @endif
+                        </div>
+                        @if ($ramassage->report)
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Issu du signalement</p>
+                                <a href="{{ route('reports.show', $ramassage->report) }}" class="text-sm font-medium text-brand-500 hover:underline">Voir le signalement d'origine</a>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Statut du signalement</p>
+                                @if ($ramassage->report->status === 'done')
+                                    <x-ui.badge color="success">Traité</x-ui.badge>
+                                @elseif ($ramassage->report->status === 'in_progress')
+                                    <x-ui.badge color="warning">En cours</x-ui.badge>
+                                @else
+                                    <x-ui.badge color="light">En attente</x-ui.badge>
+                                @endif
+                            </div>
+                        @endif
                     </div>
 
-                    <div class="card-body">
-                        <form action="" method="">
+                    @php
+                        $canCompleteRamassage = $ramassage->report
+                            && $ramassage->report->status !== 'done'
+                            && (auth()->user()->hasRole(['admin', 'manager']) || $ramassage->agent_id === auth()->id());
+                    @endphp
 
-                            <div class="input-group input-group-button mb-3">
-                                <input type="text" id="name" name="name" class="form-control" placeholder="Nom du ramassage" value="{{ $ramassage->name }}" disabled>
-                            </div>
-                            <div class="input-group input-group-button mb-3">
-                                <input type="date" id="date_de_ramassage" name="date_de_ramassage" class="form-control" value="{{ $ramassage->date_de_ramassage }}" disabled>
-                            </div>
-                            <div class="input-group input-group-button mb-3">
-                                <input type="time" id="heure_de_ramassage" name="heure_de_ramassage" class="form-control" value="{{ $ramassage->heure_de_ramassage }}" disabled>
-                            </div>
-                            <div class=" form-group">
-                                <textarea class="form-control" rows="3" name="description" id="description" placeholder="Description" disabled>{{ $ramassage->description }}</textarea>
-                            </div>
-
-                            <div class="form-group row">
-                                <label class="col-3 col-form-label fw-bold text-decoration-underline">Liste des agents affectés au ramassage : </label>
-                                <div class="col-9">
-                                    <ol class="list-group list-group-light list-group-numbered">
-                                        @foreach ($ramassage->agents as $agent)
-                                        <li class="list-group-item d-flex justify-content-between align-items-start bg-primary text-white">
-                                            <div class="form-check">
-                                                <label class="form-check-label fw-bold" for="customCheckinlh1">
-                                                    {{ $agent->full_name() }}
-                                                </label>
-                                            </div>
-                                        </li>
-                                        @endforeach
-
-                                    </ol>
-                                </div>
-                            </div>
-
-                            <div id="map" class="mb-3" style="height: 50vh;" disabled></div>
-                            <input type="hidden" id="latitude" name="latitude">
-                            <input type="hidden" id="longitude" name="longitude">
-
+                    @if ($canCompleteRamassage)
+                        <form action="{{ route('ramassages.complete', $ramassage) }}" method="POST" class="mt-6"
+                            onsubmit="return confirm('Confirmer que le ramassage a été effectué ? Le signalement sera marqué comme traité.');">
+                            @csrf
+                            <button type="submit"
+                                class="w-full rounded-lg bg-green-600 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700">
+                                Marquer le ramassage comme effectué
+                            </button>
                         </form>
+                    @endif
 
+                    <div class="mt-6 flex flex-col gap-2">
+                        <a href="https://www.google.com/maps/dir/?api=1&destination={{ $ramassage->latitude }},{{ $ramassage->longitude }}"
+                            target="_blank" rel="noopener"
+                            class="w-full rounded-lg bg-brand-500 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-600">
+                            Itinéraire vers le lieu de ramassage
+                        </a>
+                        <a href="{{ route('ramassages.index') }}"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]">Retour à la liste</a>
+
+                        @if (auth()->user()->hasRole('manager'))
+                            <form action="{{ route('ramassages.destroy', $ramassage) }}" method="POST"
+                                onsubmit="return confirm('Voulez-vous vraiment supprimer ce ramassage ?');">
+                                @csrf
+                                @method('DELETE')
+                                <button class="w-full rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-500">Supprimer</button>
+                            </form>
+                        @endif
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
-</div>
 @endsection
 
+@push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const lat = {{ $ramassage->latitude }};
+            const lng = {{ $ramassage->longitude }};
+            const map = L.map('ramassage-map').setView([lat, lng], 17);
 
-<script>
-    window.onload = function() {
-
-
-
-        function success(position) {
-            const coord = <?php echo json_encode($ramassage); ?>;
-
-            var lat = coord.latitude; // Valeur de la latitude
-            var long = coord.longitude; // Valeur de la longitude
-            
-            let map = window.L.map('map').setView([lat, long], 17);
-
-            window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
             }).addTo(map);
 
-            let marker;
-
-
-            marker = L.marker([lat, long]).addTo(map);
-
-
-        }
-
-        function error() {
-            let map = document.getElementById("map");
-            let p = document.createElement("p");
-            let textDescription = document.createTextNode("Impossible de récupérer votre position.");
-            p.appendChild(textDescription);
-            map.appendChild(p);
-        }
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(success, error);
-        }
-    };
-</script>
+            L.marker([lat, lng]).addTo(map);
+        });
+    </script>
+@endpush

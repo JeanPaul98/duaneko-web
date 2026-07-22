@@ -5,7 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -64,9 +64,9 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Get the ramassages this agent is assigned to.
      */
-    public function ramassages(): BelongsToMany
+    public function ramassages(): HasMany
     {
-        return $this->belongsToMany(Ramassage::class, 'ramassages_agents', 'agent_id', 'ramassage_id');
+        return $this->hasMany(Ramassage::class, 'agent_id');
     }
 
     /**

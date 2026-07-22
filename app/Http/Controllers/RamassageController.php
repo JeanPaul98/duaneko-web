@@ -20,15 +20,15 @@ class RamassageController extends Controller
         $user = auth()->user();
 
         if ($user->hasRole('manager')) {
-            $ramassages = Ramassage::where('company_id', $user->company_id)->paginate(5);
+            $ramassages = Ramassage::with('agent')->where('company_id', $user->company_id)->paginate(5);
             $agents = User::role('agent')->where('company_id', $user->company_id)->get();
             $zones = Zone::where('company_id', $user->company_id)->get();
         } elseif ($user->hasRole('agent')) {
-            $ramassages = $user->ramassages()->paginate(5);
+            $ramassages = $user->ramassages()->with('agent')->paginate(5);
             $agents = collect();
             $zones = collect();
         } else {
-            $ramassages = Ramassage::latest()->paginate(10);
+            $ramassages = Ramassage::with('agent')->latest()->paginate(10);
             $agents = collect();
             $zones = collect();
         }
@@ -52,16 +52,10 @@ class RamassageController extends Controller
             'date_de_ramassage' => 'required',
             'heure_de_ramassage' => 'required',
             'description' => 'required',
-
+            'agent_id' => ['nullable', 'exists:users,id'],
         ]);
         $request->merge(['company_id' => auth()->user()->company_id]);
-        $ramassage = Ramassage::create($request->all());
-
-        //Récupérer les agents sélectionnés dans la requête
-        $agent_ids = $request->input('agents', []);
-
-        //Associer les agents au ramassage
-        $ramassage->agents()->attach($agent_ids);
+        Ramassage::create($request->all());
 
         return redirect()->route('ramassages.index')
             ->with('success', 'Le ramassage a été créé avec succès.');
@@ -88,19 +82,33 @@ class RamassageController extends Controller
             'date_de_ramassage' => 'required',
             'heure_de_ramassage' => 'required',
             'description' => 'required',
-
+            'agent_id' => ['nullable', 'exists:users,id'],
         ]);
 
         $request->merge(['company_id' => auth()->user()->company_id]);
-
-        $agent_ids = $request->input('agents', []);
-
-        $ramassage->agents()->sync($agent_ids);
 
         $ramassage->update($request->all());
 
         return redirect()->route('ramassages.index')
             ->with('success', 'Le ramassage a été modifié avec succès.');
+    }
+
+    /**
+     * Marque le signalement à l'origine du ramassage comme traité, une fois
+     * la collecte effectuée sur le terrain par l'agent assigné.
+     */
+    public function complete(Ramassage $ramassage): RedirectResponse
+    {
+        $user = auth()->user();
+
+        abort_unless($user->hasRole(['admin', 'manager']) || $ramassage->agent_id === $user->id, 403);
+
+        if ($ramassage->report) {
+            $ramassage->report->update(['status' => 'done']);
+        }
+
+        return redirect()->route('ramassages.show', $ramassage)
+            ->with('success', 'Ramassage marqué comme terminé.');
     }
 
     /**
