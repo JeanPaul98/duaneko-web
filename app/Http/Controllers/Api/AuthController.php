@@ -7,6 +7,7 @@ use App\Http\Requests\StorePostRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
 {
@@ -15,6 +16,37 @@ class AuthController extends Controller
         $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh']]);
     }
 
+    #[OA\Post(
+        path: '/auth/register',
+        tags: ['Authentification'],
+        summary: 'Créer un compte citoyen',
+        description: "Crée un compte avec le rôle Citoyen par défaut. Le numéro de téléphone doit être unique.",
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['first_name', 'last_name', 'phone_number', 'password', 'password_confirmation'],
+                properties: [
+                    new OA\Property(property: 'first_name', type: 'string', example: 'Ama'),
+                    new OA\Property(property: 'last_name', type: 'string', example: 'Koffi'),
+                    new OA\Property(property: 'email', type: 'string', nullable: true, example: 'ama.koffi@example.com'),
+                    new OA\Property(property: 'phone_number', type: 'string', example: '90000000'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'secret123'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'secret123'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Compte créé',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'message', type: 'string', example: 'Utilisateur inserer avec succes'),
+                    new OA\Property(property: 'user', ref: '#/components/schemas/User'),
+                ])
+            ),
+            new OA\Response(response: 422, description: 'Validation échouée (ex. téléphone déjà utilisé)'),
+        ]
+    )]
     // sign up users
     public function register(StorePostRequest $request)
     {
@@ -45,6 +77,37 @@ class AuthController extends Controller
 
 
 
+    #[OA\Post(
+        path: '/auth/login',
+        tags: ['Authentification'],
+        summary: 'Se connecter (téléphone + mot de passe)',
+        description: "Retourne un jeton JWT à utiliser dans l'en-tête Authorization: Bearer {token}. Le compte doit avoir le statut 'validated' pour les rôles professionnels ; les citoyens sont validés par défaut.",
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['phone_number', 'password'],
+                properties: [
+                    new OA\Property(property: 'phone_number', type: 'string', example: '90000000'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'secret123'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connexion réussie',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'success', type: 'boolean', example: true),
+                    new OA\Property(property: 'message', type: 'string', example: 'connexion réussie'),
+                    new OA\Property(property: 'user', ref: '#/components/schemas/User'),
+                    new OA\Property(property: 'token_type', type: 'string', example: 'bearer'),
+                    new OA\Property(property: 'access_token', type: 'string', example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...'),
+                ])
+            ),
+            new OA\Response(response: 401, description: 'Téléphone ou mot de passe incorrect'),
+            new OA\Response(response: 422, description: 'Validation échouée'),
+        ]
+    )]
     // try connect user
     public function login(Request $request)
     {
@@ -93,6 +156,19 @@ class AuthController extends Controller
 
 
 
+    #[OA\Post(
+        path: '/auth/refresh',
+        tags: ['Authentification'],
+        summary: 'Rafraîchir le jeton JWT',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Nouveau jeton émis', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'success', type: 'boolean', example: true),
+                new OA\Property(property: 'access_token', type: 'string'),
+            ])),
+            new OA\Response(response: 401, description: 'Jeton expiré, invalide ou absent'),
+        ]
+    )]
     // refresh token
     public function refresh()
     {
@@ -108,6 +184,18 @@ class AuthController extends Controller
         }
     }
 
+    #[OA\Get(
+        path: '/auth/me',
+        tags: ['Authentification'],
+        summary: 'Profil de l\'utilisateur connecté',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Utilisateur courant', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'user', ref: '#/components/schemas/User'),
+            ])),
+            new OA\Response(response: 401, description: 'Non authentifié'),
+        ]
+    )]
     // current user connected
     public function me()
     {
@@ -116,6 +204,17 @@ class AuthController extends Controller
 
 
 
+    #[OA\Post(
+        path: '/auth/logout',
+        tags: ['Authentification'],
+        summary: 'Se déconnecter',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Déconnecté', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'message', type: 'string', example: 'Successfully logged out'),
+            ])),
+        ]
+    )]
     // logout user
     public function logout()
     {

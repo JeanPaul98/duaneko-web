@@ -6,9 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Models\ResetCodePassword;
 use App\Models\User;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
 class ResetPasswordController extends Controller
 {
+    #[OA\Post(
+        path: '/password/reset',
+        tags: ['Mot de passe'],
+        summary: 'Réinitialiser le mot de passe',
+        description: "À appeler après avoir vérifié le code via /password/code/check.",
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(required: ['code', 'password', 'password_confirmation'], properties: [
+                new OA\Property(property: 'code', type: 'string', example: '482913'),
+                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'nouveauMotDePasse'),
+                new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'nouveauMotDePasse'),
+            ])
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Mot de passe modifié', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+            new OA\Response(response: 422, description: 'Code invalide/expiré ou confirmation ne correspondant pas'),
+        ]
+    )]
     public function __invoke(Request $request)
     {
         $request->validate(

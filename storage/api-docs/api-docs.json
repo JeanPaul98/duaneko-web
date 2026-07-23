@@ -1,0 +1,878 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Duneko API",
+        "description": "API mobile de Duneko / EcoLink Africa — signalements citoyens, authentification et réinitialisation de mot de passe.\n\nDestinée à l'équipe mobile (app citoyenne Flutter).",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api",
+            "description": "Serveur courant"
+        }
+    ],
+    "paths": {
+        "/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Créer un compte citoyen",
+                "description": "Crée un compte avec le rôle Citoyen par défaut. Le numéro de téléphone doit être unique.",
+                "operationId": "08136088c4862c313b35d6518bab8d3a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "phone_number",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "Ama"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Koffi"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "ama.koffi@example.com",
+                                        "nullable": true
+                                    },
+                                    "phone_number": {
+                                        "type": "string",
+                                        "example": "90000000"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Compte créé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur inserer avec succes"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation échouée (ex. téléphone déjà utilisé)"
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Se connecter (téléphone + mot de passe)",
+                "description": "Retourne un jeton JWT à utiliser dans l'en-tête Authorization: Bearer {token}. Le compte doit avoir le statut 'validated' pour les rôles professionnels ; les citoyens sont validés par défaut.",
+                "operationId": "99d66635c4992aeaa6aa44ff653d0563",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone_number",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "phone_number": {
+                                        "type": "string",
+                                        "example": "90000000"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "connexion réussie"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "bearer"
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Téléphone ou mot de passe incorrect"
+                    },
+                    "422": {
+                        "description": "Validation échouée"
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Rafraîchir le jeton JWT",
+                "operationId": "e7ab7446393758bb71fd1946a349e500",
+                "responses": {
+                    "200": {
+                        "description": "Nouveau jeton émis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "access_token": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Jeton expiré, invalide ou absent"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Profil de l'utilisateur connecté",
+                "operationId": "7edae2cdbaafc10dff8c9c4198b320a2",
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur courant",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Se déconnecter",
+                "operationId": "6abf3b64a4bc7838d56346f05a5153af",
+                "responses": {
+                    "200": {
+                        "description": "Déconnecté",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Successfully logged out"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/reports/{user_id}": {
+            "post": {
+                "tags": [
+                    "Signalements"
+                ],
+                "summary": "Créer un signalement (utilisateur connecté)",
+                "description": "Le citoyen doit être authentifié (Bearer). Le paramètre {user_id} dans l'URL n'est pas utilisé par le serveur : l'auteur du signalement est déterminé à partir du jeton JWT, pas du paramètre — indiquer l'ID de l'utilisateur connecté par convention.",
+                "operationId": "59ac780e4d57a4b8cb0d089108fbb545",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "description": "Non utilisé côté serveur (voir description)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "image"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "description": "jpg, png, jpeg, gif ou svg — 2 Mo max",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "wild_dumps",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 6.1319,
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1.2228,
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Dépôt d'ordures près du marché",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Signalement créé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "signalement inserer avec succes"
+                                        },
+                                        "report": {
+                                            "$ref": "#/components/schemas/Report"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "422": {
+                        "description": "Validation échouée (photo manquante ou invalide)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/reports/public": {
+            "post": {
+                "tags": [
+                    "Signalements"
+                ],
+                "summary": "Créer un signalement anonyme",
+                "description": "Aucune authentification requise — utilisé quand le citoyen choisit de signaler sans compte ou en mode anonyme. Le signalement créé n'a pas de user_id.",
+                "operationId": "06f5070abbd217f7d8c27b1ee43d99ac",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "image"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "description": "jpg, png, jpeg, gif ou svg — 2 Mo max",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "wild_dumps",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 6.1319,
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1.2228,
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Dépôt d'ordures près du marché",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Signalement créé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "signalement inserer avec succes"
+                                        },
+                                        "report": {
+                                            "$ref": "#/components/schemas/Report"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation échouée (photo manquante ou invalide)"
+                    }
+                }
+            }
+        },
+        "/auth/reports/all": {
+            "get": {
+                "tags": [
+                    "Signalements"
+                ],
+                "summary": "Lister les signalements (paginé)",
+                "description": "Retourne les signalements les plus récents d'abord, paginés. Utiliser 'page' pour naviguer et 'per_page' pour ajuster la taille de page (15 par défaut, 50 maximum).",
+                "operationId": "4cff30b3831ae144730ae6edc581bec1",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Page de signalements",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "reports": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Report"
+                                                    }
+                                                },
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 62
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/image/{filename}": {
+            "get": {
+                "tags": [
+                    "Signalements"
+                ],
+                "summary": "Récupérer l'image d'un signalement",
+                "description": "Endpoint public (pas de Bearer requis) qui sert le fichier stocké lors de la création du signalement.",
+                "operationId": "44f9e1b84c145f0175449b7c1bc626ac",
+                "parameters": [
+                    {
+                        "name": "filename",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1721234567.jpg"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fichier image",
+                        "content": {
+                            "image/*": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Fichier introuvable"
+                    }
+                }
+            }
+        },
+        "/auth/users/all": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Lister tous les utilisateurs",
+                "description": "Retourne l'ensemble des utilisateurs de la plateforme (tous rôles confondus), sans filtre ni pagination.",
+                "operationId": "6c3179474eb07dd3d22a83c042b5a29b",
+                "responses": {
+                    "200": {
+                        "description": "Liste des utilisateurs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "users": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/User"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/password/code/check": {
+            "post": {
+                "tags": [
+                    "Mot de passe"
+                ],
+                "summary": "Vérifier le code de réinitialisation",
+                "description": "À appeler avant /password/reset pour valider le code reçu par email (expire après une heure).",
+                "operationId": "2c978188dc8fbbe408ccdcb412eda4a9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "482913"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code valide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Code invalide ou expiré"
+                    }
+                }
+            }
+        },
+        "/password/email": {
+            "post": {
+                "tags": [
+                    "Mot de passe"
+                ],
+                "summary": "Demander un code de réinitialisation",
+                "description": "Envoie par email un code à 6 chiffres, valable une heure. Tout code précédent pour cet email est invalidé.",
+                "operationId": "d394c1f3b1fba7ac1226b440018a522e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "ama.koffi@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code envoyé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Email inconnu ou invalide"
+                    }
+                }
+            }
+        },
+        "/password/reset": {
+            "post": {
+                "tags": [
+                    "Mot de passe"
+                ],
+                "summary": "Réinitialiser le mot de passe",
+                "description": "À appeler après avoir vérifié le code via /password/code/check.",
+                "operationId": "6cb3bf1d1135f4dae4dbd237396debd1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "482913"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "nouveauMotDePasse"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "nouveauMotDePasse"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe modifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Code invalide/expiré ou confirmation ne correspondant pas"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Report": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "user_id": {
+                        "description": "Absent pour un signalement anonyme",
+                        "type": "integer",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "type": {
+                        "description": "Catégorie du signalement",
+                        "type": "string",
+                        "example": "wild_dumps"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Dépôt d'ordures près du marché"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 6.1319
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1.2228
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending",
+                        "enum": [
+                            "pending",
+                            "in_progress",
+                            "done"
+                        ]
+                    },
+                    "image": {
+                        "description": "Nom de fichier, à récupérer via GET /image/{filename}",
+                        "type": "string",
+                        "example": "1721234567.jpg"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "example": "Ama"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "example": "Koffi"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "ama.koffi@example.com",
+                        "nullable": true
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "example": "90000000"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "validated",
+                        "enum": [
+                            "pending",
+                            "validated",
+                            "rejected"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Jeton JWT obtenu via /auth/login. À envoyer dans l'en-tête Authorization: Bearer {token}.",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentification",
+            "description": "Inscription, connexion, session du citoyen"
+        },
+        {
+            "name": "Signalements",
+            "description": "Créer et consulter les signalements de propreté urbaine"
+        },
+        {
+            "name": "Mot de passe",
+            "description": "Réinitialisation du mot de passe par code envoyé par email"
+        }
+    ]
+}
