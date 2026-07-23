@@ -106,9 +106,7 @@
                                 </span>
 
                                 <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
-                                    <span>{{ $ramassage->date_de_ramassage }}</span>
-                                    <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                    <span>{{ $ramassage->heure_de_ramassage }}</span>
+                                    <span>Assigné le {{ $ramassage->created_at->format('d/m/Y H:i') }}</span>
                                 </span>
                             </span>
                         </a>

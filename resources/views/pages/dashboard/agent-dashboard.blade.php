@@ -12,8 +12,8 @@
                 <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{{ $completed }}</h4>
             </div>
             <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-                <span class="text-sm text-gray-500 dark:text-gray-400">À venir</span>
-                <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{{ $upcoming }}</h4>
+                <span class="text-sm text-gray-500 dark:text-gray-400">En cours</span>
+                <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{{ $inProgress }}</h4>
             </div>
         </div>
 
@@ -27,8 +27,7 @@
                     <thead class="border-t border-y border-gray-100 bg-gray-50 dark:border-white/[0.05] dark:bg-gray-900">
                         <tr>
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Nom</th>
-                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Date</th>
-                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Heure</th>
+                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Assigné le</th>
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Statut</th>
                         </tr>
                     </thead>
@@ -36,19 +35,18 @@
                         @forelse ($ramassages as $ramassage)
                             <tr class="border-b border-gray-100 dark:border-white/[0.05]">
                                 <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->name }}</td>
-                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ \Illuminate\Support\Carbon::parse($ramassage->date_de_ramassage)->format('d/m/Y') }}</td>
-                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->heure_de_ramassage }}</td>
+                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="px-6 py-3.5">
-                                    @if (\Illuminate\Support\Carbon::parse($ramassage->date_de_ramassage)->lte(now()))
+                                    @if ($ramassage->completed_at)
                                         <x-ui.badge color="success">Effectué</x-ui.badge>
                                     @else
-                                        <x-ui.badge color="warning">À venir</x-ui.badge>
+                                        <x-ui.badge color="warning">En cours</x-ui.badge>
                                     @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-6 text-center text-theme-sm text-gray-500 dark:text-gray-400">Aucun ramassage assigné.</td>
+                                <td colspan="3" class="px-6 py-6 text-center text-theme-sm text-gray-500 dark:text-gray-400">Aucun ramassage assigné.</td>
                             </tr>
                         @endforelse
                     </tbody>

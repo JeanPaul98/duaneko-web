@@ -22,13 +22,25 @@ class Ramassage extends Model
         'name',
         'latitude',
         'longitude',
-        'date_de_ramassage',
-        'heure_de_ramassage',
         'description',
         'company_id',
         'report_id',
         'agent_id',
+        'completed_at',
     ];
+
+    protected $casts = [
+        'completed_at' => 'datetime',
+    ];
+
+    public function duration(): ?\Carbon\CarbonInterval
+    {
+        if (! $this->completed_at) {
+            return null;
+        }
+
+        return $this->created_at->diffAsCarbonInterval($this->completed_at);
+    }
 
     /**
      * Get the options for generating the slug.

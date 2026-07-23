@@ -6,7 +6,6 @@ use App\Models\Company;
 use App\Models\Ramassage;
 use App\Models\User;
 use App\Models\Zone;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -44,11 +43,10 @@ class DashboardController extends Controller
         }
 
         $ramassagesByMonth = array_fill(0, 12, 0);
-        $ramassageScope()->whereYear('date_de_ramassage', $now->year)
-            ->get(['date_de_ramassage'])
+        $ramassageScope()->whereYear('created_at', $now->year)
+            ->get(['created_at'])
             ->each(function ($ramassage) use (&$ramassagesByMonth) {
-                $month = Carbon::parse($ramassage->date_de_ramassage)->month;
-                $ramassagesByMonth[$month - 1]++;
+                $ramassagesByMonth[$ramassage->created_at->month - 1]++;
             });
 
         $usersByMonth = array_fill(0, 12, 0);
@@ -58,12 +56,12 @@ class DashboardController extends Controller
                 $usersByMonth[$user->created_at->month - 1]++;
             });
 
-        $ramassagesThisMonth = $ramassageScope()->whereYear('date_de_ramassage', $now->year)
-            ->whereMonth('date_de_ramassage', $now->month)
-            ->get(['date_de_ramassage']);
+        $ramassagesThisMonth = $ramassageScope()->whereYear('created_at', $now->year)
+            ->whereMonth('created_at', $now->month)
+            ->get(['completed_at']);
         $totalThisMonth = $ramassagesThisMonth->count();
         $completedThisMonth = $ramassagesThisMonth
-            ->filter(fn ($r) => Carbon::parse($r->date_de_ramassage)->lte($now))
+            ->filter(fn ($r) => $r->completed_at !== null)
             ->count();
         $completionRate = $totalThisMonth > 0
             ? round($completedThisMonth / $totalThisMonth * 100, 1)
@@ -107,13 +105,12 @@ class DashboardController extends Controller
 
     private function agentDashboard(User $agent): View
     {
-        $now = now();
-        $ramassages = $agent->ramassages()->orderBy('date_de_ramassage')->get();
+        $ramassages = $agent->ramassages()->orderByDesc('created_at')->get();
 
         $totalAssigned = $ramassages->count();
-        $completed = $ramassages->filter(fn ($r) => Carbon::parse($r->date_de_ramassage)->lte($now))->count();
-        $upcoming = $totalAssigned - $completed;
+        $completed = $ramassages->filter(fn ($r) => $r->completed_at !== null)->count();
+        $inProgress = $totalAssigned - $completed;
 
-        return view('pages.dashboard.agent-dashboard', compact('ramassages', 'totalAssigned', 'completed', 'upcoming'));
+        return view('pages.dashboard.agent-dashboard', compact('ramassages', 'totalAssigned', 'completed', 'inProgress'));
     }
 }

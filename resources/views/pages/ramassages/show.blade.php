@@ -30,16 +30,6 @@
                     <h4 class="mb-4 text-xl font-semibold text-gray-800 dark:text-white/90">{{ $ramassage->name }}</h4>
 
                     <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Date</p>
-                                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->date_de_ramassage }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Heure</p>
-                                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->heure_de_ramassage }}</p>
-                            </div>
-                        </div>
                         <div>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Description</p>
                             <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->description }}</p>
@@ -52,6 +42,16 @@
                                 <x-ui.badge color="light">Non assigné</x-ui.badge>
                             @endif
                         </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Assigné le</p>
+                            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->created_at->format('d/m/Y H:i') }}</p>
+                        </div>
+                        @if ($ramassage->completed_at)
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Durée de l'intervention</p>
+                                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->duration()->cascade()->forHumans(['short' => true]) }}</p>
+                            </div>
+                        @endif
                         @if ($ramassage->report)
                             <div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Issu du signalement</p>
@@ -119,10 +119,17 @@
             const lng = {{ $ramassage->longitude }};
             const map = L.map('ramassage-map').setView([lat, lng], 17);
 
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 19,
                 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
             }).addTo(map);
+
+            const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            });
+
+            L.control.layers({ 'Satellite': satelliteLayer, 'Standard': standardLayer }).addTo(map);
 
             L.marker([lat, lng]).addTo(map);
         });

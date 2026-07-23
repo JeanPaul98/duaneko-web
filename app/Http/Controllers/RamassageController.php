@@ -49,8 +49,6 @@ class RamassageController extends Controller
             'name' => 'required',
             'latitude' => 'required',
             'longitude' => 'required',
-            'date_de_ramassage' => 'required',
-            'heure_de_ramassage' => 'required',
             'description' => 'required',
             'agent_id' => ['nullable', 'exists:users,id'],
         ]);
@@ -79,8 +77,6 @@ class RamassageController extends Controller
             'name' => 'required',
             'latitude' => 'required',
             'longitude' => 'required',
-            'date_de_ramassage' => 'required',
-            'heure_de_ramassage' => 'required',
             'description' => 'required',
             'agent_id' => ['nullable', 'exists:users,id'],
         ]);
@@ -102,6 +98,8 @@ class RamassageController extends Controller
         $user = auth()->user();
 
         abort_unless($user->hasRole(['admin', 'manager']) || $ramassage->agent_id === $user->id, 403);
+
+        $ramassage->update(['completed_at' => now()]);
 
         if ($ramassage->report) {
             $ramassage->report->update(['status' => 'done']);

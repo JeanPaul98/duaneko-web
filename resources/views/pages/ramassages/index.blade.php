@@ -35,8 +35,6 @@
                     <thead class="border-t border-y border-gray-100 bg-gray-50 dark:border-white/[0.05] dark:bg-gray-900">
                         <tr>
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Nom</th>
-                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Date</th>
-                            <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Heure</th>
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Agents</th>
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Statut</th>
                             <th class="px-6 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Action</th>
@@ -46,8 +44,6 @@
                         @foreach ($ramassages as $ramassage)
                             <tr class="border-b border-gray-100 dark:border-white/[0.05]">
                                 <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->name }}</td>
-                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->date_de_ramassage }}</td>
-                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->heure_de_ramassage }}</td>
                                 <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">
                                     {{ $ramassage->agent?->full_name() ?? '—' }}
                                 </td>
@@ -91,16 +87,6 @@
                                                     <label class="{{ $labelClass }}">Nom</label>
                                                     <input type="text" name="name" value="{{ old('_editing_ramassage') == $ramassage->id ? old('name') : $ramassage->name }}" class="{{ $inputClass }}">
                                                     @error('name') <p class="mt-1.5 text-sm text-red-500">{{ $message }}</p> @enderror
-                                                </div>
-                                                <div>
-                                                    <label class="{{ $labelClass }}">Date</label>
-                                                    <input type="date" name="date_de_ramassage" value="{{ old('_editing_ramassage') == $ramassage->id ? old('date_de_ramassage') : $ramassage->date_de_ramassage }}" class="{{ $inputClass }}">
-                                                    @error('date_de_ramassage') <p class="mt-1.5 text-sm text-red-500">{{ $message }}</p> @enderror
-                                                </div>
-                                                <div>
-                                                    <label class="{{ $labelClass }}">Heure</label>
-                                                    <input type="time" name="heure_de_ramassage" value="{{ old('_editing_ramassage') == $ramassage->id ? old('heure_de_ramassage') : $ramassage->heure_de_ramassage }}" class="{{ $inputClass }}">
-                                                    @error('heure_de_ramassage') <p class="mt-1.5 text-sm text-red-500">{{ $message }}</p> @enderror
                                                 </div>
                                                 <div class="sm:col-span-2">
                                                     <label class="{{ $labelClass }}">Description</label>
@@ -157,16 +143,6 @@
                             <input type="text" name="name" value="{{ old('_creating_ramassage') ? old('name') : '' }}" class="{{ $inputClass }}">
                             @error('name') <p class="mt-1.5 text-sm text-red-500">{{ $message }}</p> @enderror
                         </div>
-                        <div>
-                            <label class="{{ $labelClass }}">Date</label>
-                            <input type="date" name="date_de_ramassage" value="{{ old('_creating_ramassage') ? old('date_de_ramassage') : '' }}" class="{{ $inputClass }}">
-                            @error('date_de_ramassage') <p class="mt-1.5 text-sm text-red-500">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="{{ $labelClass }}">Heure</label>
-                            <input type="time" name="heure_de_ramassage" value="{{ old('_creating_ramassage') ? old('heure_de_ramassage') : '' }}" class="{{ $inputClass }}">
-                            @error('heure_de_ramassage') <p class="mt-1.5 text-sm text-red-500">{{ $message }}</p> @enderror
-                        </div>
                         <div class="sm:col-span-2">
                             <label class="{{ $labelClass }}">Description</label>
                             <textarea name="description" rows="3" class="{{ $inputClass }}">{{ old('_creating_ramassage') ? old('description') : '' }}</textarea>
@@ -183,7 +159,7 @@
                         </div>
                     </div>
                     <p class="mt-4 mb-1.5 text-sm text-gray-500 dark:text-gray-400">Cliquez sur la carte pour placer le point de ramassage.</p>
-                    <div id="map-ramassage-create" class="rounded-lg" style="height: 60vh;"></div>
+                    <div id="map-ramassage-create" class="rounded-lg" style="height: 300px;"></div>
                     <input type="hidden" id="ramassage-create-latitude" name="latitude">
                     <input type="hidden" id="ramassage-create-longitude" name="longitude">
                     @error('latitude') <p class="mt-1.5 text-sm text-red-500">Veuillez cliquer sur la carte pour placer le point.</p> @enderror
@@ -217,10 +193,17 @@
                     initialLatLng ? 15 : 12
                 );
 
-                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                     maxZoom: 19,
                     attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
                 }).addTo(map);
+
+                const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                });
+
+                L.control.layers({ 'Satellite': satelliteLayer, 'Standard': standardLayer }).addTo(map);
 
                 let marker = null;
                 if (initialLatLng) {

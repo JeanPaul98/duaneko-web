@@ -42,7 +42,7 @@ class AppServiceProvider extends ServiceProvider
                     'notificationType' => 'ramassages',
                     'pendingReportsCount' => $user->ramassages()->count(),
                     'pendingReports' => collect(),
-                    'assignedRamassages' => $user->ramassages()->orderByDesc('date_de_ramassage')->limit(5)->get(),
+                    'assignedRamassages' => $user->ramassages()->orderByDesc('created_at')->limit(5)->get(),
                 ]);
                 return;
             }

@@ -87,7 +87,7 @@
                                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Réaffecter à un autre agent</label>
                                     <select name="agent_id" class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                                         @foreach ($agents as $agent)
-                                            <option value="{{ $agent->id }}" @selected($report->ramassage->agent_id == $agent->id)>{{ $agent->full_name() }}</option>
+                                            <option value="{{ $agent->id }}" @selected($report->ramassage->agent_id == $agent->id)>{{ $agent->full_name() }} — {{ $agent->active_ramassages_count }} ramassage(s) en cours — {{ ucfirst($agent->status) }}</option>
                                         @endforeach
                                     </select>
                                     <button type="submit" class="mt-3 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]">Réaffecter</button>
@@ -158,10 +158,17 @@
             const lng = {{ $report->longitude }};
             const map = L.map('report-map').setView([lat, lng], 15);
 
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 19,
                 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
             }).addTo(map);
+
+            const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            });
+
+            L.control.layers({ 'Satellite': satelliteLayer, 'Standard': standardLayer }).addTo(map);
 
             L.marker([lat, lng]).addTo(map);
 

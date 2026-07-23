@@ -68,7 +68,9 @@ class ReportController extends Controller
         $matchedZone = $zones->first(fn ($zone) => $this->reportWithinZones($report, collect([$zone])));
 
         $agents = $matchedZone
-            ? User::role('agent')->where('company_id', $matchedZone->company_id)->where('status', 'validated')->get()
+            ? User::role('agent')->where('company_id', $matchedZone->company_id)->where('status', 'validated')
+                ->withCount(['ramassages as active_ramassages_count' => fn ($q) => $q->whereNull('completed_at')])
+                ->get()
             : collect();
 
         $message = $this->buildAgentMessage($report);
@@ -97,10 +99,7 @@ class ReportController extends Controller
 
         $typeLabels = ['wild_dumps' => 'Dépôt sauvage'];
 
-        $ramassage = $report->ramassage ?: new Ramassage([
-            'date_de_ramassage' => now()->toDateString(),
-            'heure_de_ramassage' => now()->format('H:i'),
-        ]);
+        $ramassage = $report->ramassage ?: new Ramassage();
 
         $ramassage->fill([
             'report_id' => $report->id,
