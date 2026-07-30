@@ -50,8 +50,7 @@
 
             <!-- Logo (mobile only) -->
             <a href="/" class="xl:hidden">
-                <img class="dark:hidden" src="/images/logo/logo.svg" alt="Logo" />
-                <img class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="Logo" />
+                <img src="{{ asset('images/logo/duaneko_logo.png') }}" alt="Duneko" class="h-9 w-9 shrink-0 rounded-lg object-cover" />
             </a>
 
             <!-- Application Menu Toggle (mobile only) -->

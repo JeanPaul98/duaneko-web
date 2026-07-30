@@ -3,39 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Zone;
-use App\Models\Manager;
+use App\Models\Country;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 
 class ZoneController extends Controller
 {
-    
+
     public function index()
     {
-        $zones = [];
-
-        if (Auth::guard('manager')->check()) {
-            $id_manager = Auth::guard('manager')->id();
-            $id_company = Manager::find($id_manager);
-            $zones = Zone::where('company_id', $id_company->company_id)->paginate(5);
-            // $zones = Zone::where('company_id', Auth::user()->company_id)->paginate(5);
+        if (auth()->user()->hasRole('manager')) {
+            $zones = Zone::with('administrativeDivision')->where('company_id', auth()->user()->company_id)->paginate(5);
         } else {
-            $zones = Zone::latest()->paginate(10); 
-        } 
-        
-        return view('pages.zones.index', compact('zones'))
-            ->with('i', (request()->input('page', 1) - 1) * 5);
-    }
+            $zones = Zone::with('administrativeDivision')->latest()->paginate(10);
+        }
 
-    public function create()
-    {
-        return view('pages.zones.create');
+        $countries = Country::orderBy('name')->get();
+
+        return view('pages.zones.index', compact('zones', 'countries'))
+            ->with('i', (request()->input('page', 1) - 1) * 5);
     }
 
     public function store(Request $request): RedirectResponse
     {
-          
+
         $request->validate([
             'name' => 'required',
             'color' => 'required',
@@ -44,10 +35,9 @@ class ZoneController extends Controller
             'northeast_longitude' => 'required',
             'southwest_latitude' => 'required',
             'southwest_longitude' => 'required',
+            'administrative_division_id' => ['nullable', 'exists:administrative_divisions,id'],
         ]);
-        $id_manager = Auth::guard('manager')->id();
-        $id_company = Manager::find($id_manager);
-        $request->merge(['company_id' => $id_company->company_id]);
+        $request->merge(['company_id' => auth()->user()->company_id]);
         Zone::create($request->all());
 
         return redirect()->route('zones.index')
@@ -60,11 +50,6 @@ class ZoneController extends Controller
     }
 
 
-    public function edit(Zone $zone)
-    {  
-        return view('pages.zones.edit',compact('zone'));
-    }
-
     public function update(Request $request, Zone $zone)
     {
         $request->validate([
@@ -75,20 +60,21 @@ class ZoneController extends Controller
             'northeast_longitude' => 'required',
             'southwest_latitude' => 'required',
             'southwest_longitude' => 'required',
-            
+            'administrative_division_id' => ['nullable', 'exists:administrative_divisions,id'],
+
         ]);
-       
+
         $zone->update($request->all());
         return redirect()->route('zones.show',compact('zone'))->with('success','Zone modifier avec success');
     }
 
     public function destroy(Zone $zone)
     {
- 
+
         $zone->delete();
         return redirect()->route('zones.index')->with('success','La zone a été supprimé avec success');
     }
-    
+
 
 
 }

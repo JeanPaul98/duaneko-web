@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Ramassage extends Model
 {
@@ -23,11 +22,25 @@ class Ramassage extends Model
         'name',
         'latitude',
         'longitude',
-        'date_de_ramassage',
-        'heure_de_ramassage',
         'description',
-        'company_id'
+        'company_id',
+        'report_id',
+        'agent_id',
+        'completed_at',
     ];
+
+    protected $casts = [
+        'completed_at' => 'datetime',
+    ];
+
+    public function duration(): ?\Carbon\CarbonInterval
+    {
+        if (! $this->completed_at) {
+            return null;
+        }
+
+        return $this->created_at->diffAsCarbonInterval($this->completed_at);
+    }
 
     /**
      * Get the options for generating the slug.
@@ -39,8 +52,13 @@ class Ramassage extends Model
             ->saveSlugsTo('slug');
     }
 
-    public function agents(): BelongsToMany
+    public function agent(): BelongsTo
     {
-        return $this->belongsToMany(Agent::class , 'ramassages_agents');
+        return $this->belongsTo(User::class, 'agent_id');
+    }
+
+    public function report(): BelongsTo
+    {
+        return $this->belongsTo(Report::class);
     }
 }

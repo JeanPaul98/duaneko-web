@@ -59,18 +59,18 @@
     @mouseenter="if (!$store.sidebar.isExpanded) $store.sidebar.setHovered(true)"
     @mouseleave="$store.sidebar.setHovered(false)">
     <!-- Logo Section -->
-    <div class="pt-3 pb-5 flex"
+    <div class="pt-3 pb-5 flex items-center"
         :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ?
         'xl:justify-center' :
         'justify-start'">
-        <!-- <a href="/">
+        <a href="{{ route('home') }}" class="flex items-center gap-2.5">
             <img x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
-                class="dark:hidden" src="/images/logo/duaneko_logo.png" alt="Logo" width="100" height="50" />
-            <img x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
-                class="hidden dark:block" src="/images/logo/duaneko_logo.png" alt="Logo"  width="100" height="50" />
+                src="{{ asset('images/logo/duaneko_logo.png') }}" alt="Duneko" class="h-10 w-10 shrink-0 rounded-lg object-cover" />
             <img x-show="!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen"
-                src="/images/logo/duaneko_logo.png" alt="Logo" width="32" height="32" />
-        </a> -->
+                src="{{ asset('images/logo/duaneko_logo.png') }}" alt="Duneko" class="h-8 w-8 shrink-0 rounded-lg object-cover" />
+            <span x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
+                class="text-lg font-bold text-gray-800 dark:text-white/90">Duneko</span>
+        </a>
     </div>
 
     <!-- Navigation Menu -->

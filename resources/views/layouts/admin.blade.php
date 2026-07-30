@@ -87,21 +87,21 @@
                                 class="pc-mtext">Signalements</span></a>
                     </li>
                     
-                    @if ((Auth::guard('admin')->check()) || (Auth::guard('manager')->check()))
+                    @if (auth()->user()->hasRole(['admin', 'manager']))
                     <li class="pc-item">
                         <a href="{{ route('agents.index') }}" class="pc-link "><span class="pc-micon"><i
                                     class="material-icons-two-tone">group</i></span><span
                                 class="pc-mtext">Agents</span></a>
                     </li>
                     @endif
-                    @if(Auth::guard('admin')->check())
+                    @if(auth()->user()->hasRole('admin'))
                     <li class="pc-item">
                         <a href="{{ route('companies.index') }}" class="pc-link "><span class="pc-micon"><i
                                     class="material-icons-two-tone">business</i></span><span
                                 class="pc-mtext">Entreprises</span></a>
                     </li>
                     @endif
-                    @if (Auth::guard('admin')->check())
+                    @if (auth()->user()->hasRole('admin'))
                     <li class="pc-item">
                         <a href="{{ route('managers.index') }}" class="pc-link "><span class="pc-micon"><i
                                     class="material-icons-two-tone">airline_seat_recline_extra</i></span><span   

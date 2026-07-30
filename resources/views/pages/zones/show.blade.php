@@ -1,106 +1,110 @@
-@extends('layouts.admin')
+@extends('layouts.app')
+
+@push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+        #zone-map { height: 400px; }
+    </style>
+@endpush
 
 @section('content')
-    <div class="pc-container">
-        <div class="pcoded-content">
-            <!-- [ breadcrumb ] start -->
-            <div class="page-header">
-                <div class="page-block">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div class="page-header-title">
-                                <h5 class="m-b-10">Details de la zone</h5>
-                            </div>
-                            <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="index.html">Tableau de bord</a></li>
-                                <li class="breadcrumb-item">Details de la zone</li>
-                            </ul>
-                        </div>
-                    </div>
+    <x-common.page-breadcrumb pageTitle="Détail de la zone" />
+
+    <div class="space-y-6">
+        @if ($message = Session::get('success'))
+            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                {{ $message }}
+            </div>
+        @endif
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div class="lg:col-span-2">
+                <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]">
+                    <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">Délimitation géographique</h3>
+                    <div id="zone-map" class="rounded-lg"></div>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-xl-12 col-md-12">
+            <div>
+                <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/[0.05] dark:bg-white/[0.03]">
+                    <div class="mb-4 flex items-center gap-3">
+                        <span class="h-6 w-6 rounded-full border border-gray-200 dark:border-gray-700" style="background-color: {{ $zone->color }}"></span>
+                        <h4 class="text-xl font-semibold text-gray-800 dark:text-white/90">{{ $zone->name }}</h4>
+                    </div>
 
-                    <div class="card">
-                        <div class="card-body table-border-style">
-
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <h5>Details</h5>
-                                </div>
-                                <div class="col-sm-6">
-                                    <a class="btn btn-success btn-sm btn-round mb-3" href="{{ route('zones.index') }}"><i
-                                            class="feather icon-plus"></i> Retour</a>
-                                </div>
-                            </div>
-
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Lieu recherché</p>
+                            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $zone->google_map_name }}</p>
                         </div>
-
-                        <div class="card-body table-border-style">
-
-                            <div class="input-group input-group-button mb-3">
-                                <input type="text" class="form-control" value="{{ $zone->name }}" disabled>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Entreprise</p>
+                            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $zone->company->name ?? '—' }}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Nord-est</p>
+                                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $zone->northeast_latitude }}, {{ $zone->northeast_longitude }}</p>
                             </div>
-                            <div class="input-group input-group-button mb-3">
-                                <input type="text" class="form-control" value="{{ $zone->google_map_name }}" disabled>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Sud-ouest</p>
+                                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $zone->southwest_latitude }}, {{ $zone->southwest_longitude }}</p>
                             </div>
-
-                            <div id="map" class="mb-3" style="height: 50vh;"></div>
                         </div>
                     </div>
 
+                    <div class="mt-6 flex flex-col gap-2">
+                        <a href="{{ route('zones.index') }}"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]">Retour à la liste</a>
+
+                        @if (auth()->user()->hasRole('manager'))
+                            <form action="{{ route('zones.destroy', $zone) }}" method="POST"
+                                onsubmit="return confirm('Voulez-vous vraiment supprimer cette zone ?');">
+                                @csrf
+                                @method('DELETE')
+                                <button class="w-full rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-500">Supprimer</button>
+                            </form>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 @endsection
 
+@push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const bounds = {
+                neLat: {{ $zone->northeast_latitude }},
+                neLng: {{ $zone->northeast_longitude }},
+                swLat: {{ $zone->southwest_latitude }},
+                swLng: {{ $zone->southwest_longitude }}
+            };
 
-<script>
-    window.onload = function() {
+            const map = L.map('zone-map');
 
-        function success(position) {
-            let latitude = position.coords.latitude;
-            let longitude = position.coords.longitude;
-            let map = window.L.map('map').setView([latitude, longitude], 12);
-            window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
             }).addTo(map);
 
-            const zone = <?php echo json_encode($zone); ?>;
+            const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            });
 
-            zone.northeast_latitude
-            zone.northeast_longitude
-            zone.southwest_latitude
-            zone.southwest_longitude
+            L.control.layers({ 'Satellite': satelliteLayer, 'Standard': standardLayer }).addTo(map);
 
-            let currentZonePolygonCoords = [
-                [zone.northeast_latitude, zone.northeast_longitude],
-                [zone.southwest_latitude, zone.northeast_longitude],
-                [zone.southwest_latitude, zone.southwest_longitude],
-                [zone.northeast_latitude, zone.southwest_longitude]
-            ];
+            const polygon = L.polygon([
+                [bounds.neLat, bounds.neLng],
+                [bounds.swLat, bounds.neLng],
+                [bounds.swLat, bounds.swLng],
+                [bounds.neLat, bounds.swLng]
+            ], { color: '{{ $zone->color }}' }).addTo(map);
 
-            var currentZonePolygon = L.polygon(currentZonePolygonCoords, {
-                color: "blue"
-            }).addTo(map);
-            map.fitBounds(currentZonePolygon.getBounds());
-
-        }
-
-        function error() {
-            let map = document.getElementById("map");
-            let p = document.createElement("p");
-            let textDescription = document.createTextNode("Impossible de récupérer votre position.");
-            p.appendChild(textDescription);
-            map.appendChild(p);
-        }
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(success, error);
-        }
-    };
-</script>
+            map.fitBounds(polygon.getBounds());
+        });
+    </script>
+@endpush

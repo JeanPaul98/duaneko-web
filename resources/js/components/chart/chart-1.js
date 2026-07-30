@@ -4,10 +4,22 @@ export const initChartOne = () => {
     const chartElement = document.querySelector('#chartOne');
     if (!chartElement) return;
 
+    let seriesData = [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112];
+    if (chartElement.dataset.series) {
+        try {
+            const parsed = JSON.parse(chartElement.dataset.series);
+            if (Array.isArray(parsed) && parsed.length) {
+                seriesData = parsed;
+            }
+        } catch (e) {
+            // keep default data
+        }
+    }
+
     const chartOneOptions = {
         series: [{
-            name: "Sales",
-            data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
+            name: "Ramassages",
+            data: seriesData,
         },],
         colors: ["#465fff"],
         chart: {
@@ -37,13 +49,13 @@ export const initChartOne = () => {
         xaxis: {
             categories: [
                 "Jan",
-                "Feb",
+                "Fev",
                 "Mar",
-                "Apr",
-                "May",
+                "Avr",
+                "Mai",
                 "Jun",
                 "Jul",
-                "Aug",
+                "Aou",
                 "Sep",
                 "Oct",
                 "Nov",

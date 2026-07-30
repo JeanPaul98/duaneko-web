@@ -3,14 +3,27 @@ export const initChartThree = () => {
     const chartElement = document.querySelector('#chartThree');
 
     if (chartElement) {
+        const parseSeries = (raw, fallback) => {
+            if (!raw) return fallback;
+            try {
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) && parsed.length ? parsed : fallback;
+            } catch (e) {
+                return fallback;
+            }
+        };
+
+        const ramassagesData = parseSeries(chartElement.dataset.ramassages, [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235]);
+        const usersData = parseSeries(chartElement.dataset.users, [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140]);
+
         const chartThreeOptions = {
             series: [{
-                name: "Sales",
-                data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
+                name: "Ramassages",
+                data: ramassagesData,
             },
             {
-                name: "Revenue",
-                data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
+                name: "Nouveaux utilisateurs",
+                data: usersData,
             },
             ],
             legend: {
@@ -69,17 +82,17 @@ export const initChartThree = () => {
                 type: "category",
                 categories: [
                     "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
+                "Fev",
+                "Mar",
+                "Avr",
+                "Mai",
+                "Jun",
+                "Jul",
+                "Aou",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec",
                 ],
                 axisBorder: {
                     show: false,

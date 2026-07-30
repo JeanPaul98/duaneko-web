@@ -3,8 +3,10 @@ export const initChartTwo = () => {
     const chartElement = document.querySelector('#chartTwo');
 
     if (chartElement) {
+        const rate = chartElement.dataset.rate ? parseFloat(chartElement.dataset.rate) : 0;
+
         const chartTwoOptions = {
-            series: [75.55],
+            series: [rate],
             colors: ["#465FFF"],
             chart: {
                 fontFamily: "Outfit, sans-serif",

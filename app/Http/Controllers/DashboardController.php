@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
+use App\Models\Ramassage;
+use App\Models\User;
+use App\Models\Zone;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -9,41 +13,104 @@ class DashboardController extends Controller
 {
     /**
      * Show the application dashboard.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index()
+    public function index(Request $request)
     {
-        return view('pages.dashboard.dashboard');
+        $authUser = auth()->user();
+
+        if ($authUser->hasRole('agent')) {
+            return $this->agentDashboard($authUser);
+        }
+
+        $isAdmin = $authUser->hasRole('admin');
+        $companyId = $authUser->company_id;
+        $now = now();
+
+        $userScope = fn () => $isAdmin ? User::query() : User::where('company_id', $companyId);
+        $ramassageScope = fn () => $isAdmin ? Ramassage::query() : Ramassage::where('company_id', $companyId);
+
+        $metrics = [
+            ['label' => 'Utilisateurs', 'value' => $userScope()->count(), 'icon' => 'users'],
+            ['label' => 'Ramassages', 'value' => $ramassageScope()->count(), 'icon' => 'ramassages'],
+        ];
+
+        if ($isAdmin) {
+            $metrics[] = ['label' => 'Entreprises', 'value' => Company::count(), 'icon' => 'building'];
+            $metrics[] = ['label' => 'Zones actives', 'value' => Zone::count(), 'icon' => 'zone'];
+        } else {
+            $metrics[] = ['label' => 'Agents', 'value' => User::role('agent')->where('company_id', $companyId)->count(), 'icon' => 'building'];
+            $metrics[] = ['label' => 'Zones actives', 'value' => Zone::where('company_id', $companyId)->count(), 'icon' => 'zone'];
+        }
+
+        $ramassagesByMonth = array_fill(0, 12, 0);
+        $ramassageScope()->whereYear('created_at', $now->year)
+            ->get(['created_at'])
+            ->each(function ($ramassage) use (&$ramassagesByMonth) {
+                $ramassagesByMonth[$ramassage->created_at->month - 1]++;
+            });
+
+        $usersByMonth = array_fill(0, 12, 0);
+        $userScope()->whereYear('created_at', $now->year)
+            ->get(['created_at'])
+            ->each(function ($user) use (&$usersByMonth) {
+                $usersByMonth[$user->created_at->month - 1]++;
+            });
+
+        $ramassagesThisMonth = $ramassageScope()->whereYear('created_at', $now->year)
+            ->whereMonth('created_at', $now->month)
+            ->get(['completed_at']);
+        $totalThisMonth = $ramassagesThisMonth->count();
+        $completedThisMonth = $ramassagesThisMonth
+            ->filter(fn ($r) => $r->completed_at !== null)
+            ->count();
+        $completionRate = $totalThisMonth > 0
+            ? round($completedThisMonth / $totalThisMonth * 100, 1)
+            : 0;
+
+        $roleFilter = $request->query('role');
+        $statusFilter = $request->query('status');
+        $search = $request->query('search');
+
+        $usersQuery = $userScope()->with('company')->latest();
+
+        if ($roleFilter) {
+            $usersQuery->role($roleFilter);
+        }
+        if ($statusFilter) {
+            $usersQuery->where('status', $statusFilter);
+        }
+        if ($search) {
+            $usersQuery->where(function ($query) use ($search) {
+                $query->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $usersQuery->paginate(10)->withQueryString();
+
+        return view('pages.dashboard.dashboard', compact(
+            'metrics',
+            'ramassagesByMonth',
+            'usersByMonth',
+            'completionRate',
+            'totalThisMonth',
+            'completedThisMonth',
+            'users',
+            'roleFilter',
+            'statusFilter',
+            'search'
+        ));
     }
 
-    public function reports(): View
+    private function agentDashboard(User $agent): View
     {
-        return view('pages.others.reports');
-    }
+        $ramassages = $agent->ramassages()->orderByDesc('created_at')->get();
 
-    public function agents(): View
-    {
-        return view('pages.others.agents');
-    }
+        $totalAssigned = $ramassages->count();
+        $completed = $ramassages->filter(fn ($r) => $r->completed_at !== null)->count();
+        $inProgress = $totalAssigned - $completed;
 
-    public function managers(): View
-    {
-        return view('pages.others.managers');
-    }
-
-    public function companies(): View
-    {
-        return view('pages.others.companies');
-    }
-
-    public function zones(): View
-    {
-        return view('pages.zones.index');
-    }
-
-    public function ramassages(): View
-    {
-        return view('pages.others.ramassages');
+        return view('pages.dashboard.agent-dashboard', compact('ramassages', 'totalAssigned', 'completed', 'inProgress'));
     }
 }
