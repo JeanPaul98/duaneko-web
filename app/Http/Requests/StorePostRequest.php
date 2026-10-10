@@ -25,7 +25,8 @@ class StorePostRequest extends FormRequest
             'first_name' => 'bail|required|min:2|max:30',
             'last_name' => 'required',
             'email' => 'nullable|email',
-            'phone_number' => 'required|string|unique:users',
+            // Format international : indicatif choisi dans l'app + numéro local, ex. +22890000000.
+            'phone_number' => ['required', 'string', 'regex:/^\+\d{8,15}$/', 'unique:users'],
             'password' => 'bail|required|string|min:6|max:20|confirmed'
         ];
     }

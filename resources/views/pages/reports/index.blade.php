@@ -76,7 +76,7 @@
                                         <x-ui.badge color="light">En attente</x-ui.badge>
                                     @endif
                                 </td>
-                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $report->created_at->format('d/m/Y') }}</td>
+                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $report->created_at?->format('d/m/Y') ?? '—' }}</td>
                                 <td class="px-6 py-3.5">
                                     <a href="{{ route('reports.show', $report) }}"
                                         class="rounded-lg border border-gray-300 px-3 py-1.5 text-theme-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]">Détail</a>

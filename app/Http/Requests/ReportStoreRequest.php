@@ -22,11 +22,20 @@ class ReportStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'image' => 'required|image|mimes:jpg,png,jpeg,gif,svg|max:2048',
+            'image' => 'required|image|mimes:jpg,png,jpeg,gif|max:8192',
             'type' => 'nullable|string',
-            'latitude' => 'nullable',
-            'longitude' => 'nullable',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
             'description' => 'nullable|string',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'latitude.required' => 'La position GPS est indisponible. Activez la localisation et réessayez.',
+            'longitude.required' => 'La position GPS est indisponible. Activez la localisation et réessayez.',
+            'image.max' => 'La photo est trop lourde (8 Mo maximum).',
         ];
     }
 }

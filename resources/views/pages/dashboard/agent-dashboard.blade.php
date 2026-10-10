@@ -35,7 +35,7 @@
                         @forelse ($ramassages as $ramassage)
                             <tr class="border-b border-gray-100 dark:border-white/[0.05]">
                                 <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->name }}</td>
-                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->created_at->format('d/m/Y H:i') }}</td>
+                                <td class="px-6 py-3.5 text-theme-sm text-gray-700 dark:text-gray-400">{{ $ramassage->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
                                 <td class="px-6 py-3.5">
                                     @if ($ramassage->completed_at)
                                         <x-ui.badge color="success">Effectué</x-ui.badge>

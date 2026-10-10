@@ -44,7 +44,7 @@
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Assigné le</p>
-                            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->created_at->format('d/m/Y H:i') }}</p>
+                            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $ramassage->created_at?->format('d/m/Y H:i') ?? '—' }}</p>
                         </div>
                         @if ($ramassage->completed_at)
                             <div>

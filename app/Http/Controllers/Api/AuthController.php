@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePostRequest;
+use App\Models\Country;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
@@ -127,7 +130,15 @@ class AuthController extends Controller
         }
 
 
-        if (!$token = auth('api')->attempt($validateData->validated())) {
+        $credentials = $validateData->validated();
+        $token = auth('api')->attempt($credentials);
+
+        // Comptes créés avant le sélecteur de pays : numéro enregistré sans indicatif.
+        if (!$token && ($localNumber = $this->stripCountryCode($credentials['phone_number']))) {
+            $token = auth('api')->attempt(['phone_number' => $localNumber] + $credentials);
+        }
+
+        if (!$token) {
 
             return response()->json(
                 [
@@ -140,6 +151,19 @@ class AuthController extends Controller
         return $this->respondWithToken($token);
     }
 
+
+    /**
+     * Retire l'indicatif d'un pays configuré (ex. +22890000000 -> 90000000),
+     * ou null si le numéro ne commence par aucun indicatif connu.
+     */
+    private function stripCountryCode(string $phoneNumber): ?string
+    {
+        $phoneCode = Country::whereNotNull('phone_code')->pluck('phone_code')
+            ->sortByDesc(fn ($code) => strlen($code))
+            ->first(fn ($code) => str_starts_with($phoneNumber, $code));
+
+        return $phoneCode ? substr($phoneNumber, strlen($phoneCode)) : null;
+    }
 
     // create token for users
     protected  function respondWithToken($token)
@@ -203,6 +227,90 @@ class AuthController extends Controller
     }
 
 
+
+    #[OA\Put(
+        path: '/auth/me',
+        tags: ['Authentification'],
+        summary: 'Modifier son profil',
+        description: "Met à jour les informations de l'utilisateur connecté. Seuls les champs envoyés sont modifiés.",
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'first_name', type: 'string', example: 'Ama'),
+                new OA\Property(property: 'last_name', type: 'string', example: 'Koffi'),
+                new OA\Property(property: 'email', type: 'string', nullable: true, example: 'ama.koffi@example.com'),
+                new OA\Property(property: 'phone_number', type: 'string', example: '90000000'),
+            ])
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Profil mis à jour', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'message', type: 'string'),
+                new OA\Property(property: 'user', ref: '#/components/schemas/User'),
+            ])),
+            new OA\Response(response: 401, description: 'Non authentifié'),
+            new OA\Response(response: 422, description: 'Validation échouée (ex. téléphone ou email déjà utilisé)'),
+        ]
+    )]
+    public function updateMe(Request $request)
+    {
+        $user = auth('api')->user();
+
+        $data = $request->validate([
+            'first_name' => 'sometimes|required|string|min:2|max:30',
+            'last_name' => 'sometimes|required|string|max:255',
+            'email' => ['sometimes', 'nullable', 'email', Rule::unique('users')->ignore($user->id)],
+            'phone_number' => ['sometimes', 'required', 'string', 'regex:/^\+\d{8,15}$/', Rule::unique('users')->ignore($user->id)],
+        ]);
+
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Profil mis à jour avec succès',
+            'user' => $user->fresh(),
+        ]);
+    }
+
+    #[OA\Put(
+        path: '/auth/me/password',
+        tags: ['Authentification'],
+        summary: 'Changer son mot de passe',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(required: ['current_password', 'password', 'password_confirmation'], properties: [
+                new OA\Property(property: 'current_password', type: 'string', format: 'password'),
+                new OA\Property(property: 'password', type: 'string', format: 'password'),
+                new OA\Property(property: 'password_confirmation', type: 'string', format: 'password'),
+            ])
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Mot de passe modifié'),
+            new OA\Response(response: 401, description: 'Non authentifié'),
+            new OA\Response(response: 422, description: 'Mot de passe actuel incorrect ou confirmation invalide'),
+        ]
+    )]
+    public function updatePassword(Request $request)
+    {
+        $user = auth('api')->user();
+
+        $request->validate([
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:6|max:20|confirmed',
+        ]);
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Le mot de passe actuel est incorrect',
+                'errors' => ['current_password' => ['Le mot de passe actuel est incorrect']],
+            ], 422);
+        }
+
+        // Le cast 'hashed' du modèle User se charge du hachage.
+        $user->update(['password' => $request->password]);
+
+        return response()->json(['message' => 'Mot de passe modifié avec succès']);
+    }
 
     #[OA\Post(
         path: '/auth/logout',

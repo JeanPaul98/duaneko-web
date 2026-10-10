@@ -15,6 +15,8 @@ class CompanySeeder extends Seeder
     public function run(): void
     {
         DB::table('companies')->insert([
+            'created_at' => now(),
+            'updated_at' => now(),
             'name' => "Okemamy"
         ]);
     }

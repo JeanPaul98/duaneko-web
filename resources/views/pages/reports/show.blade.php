@@ -49,7 +49,7 @@
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Date</p>
-                            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $report->created_at->format('d/m/Y H:i') }}</p>
+                            <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $report->created_at?->format('d/m/Y H:i') ?? '—' }}</p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Statut actuel</p>

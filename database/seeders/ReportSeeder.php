@@ -15,6 +15,8 @@ class ReportSeeder extends Seeder
     public function run(): void
     {
         DB::table('reports')->insert([
+            'created_at' => now(),
+            'updated_at' => now(),
             'image' => "",
             'type' => "wild_dumps",
             'latitude' => "14.758749",

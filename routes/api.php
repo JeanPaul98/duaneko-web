@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CountryController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ResetPassword\CodeCheckController;
 use App\Http\Controllers\Api\ResetPassword\ForgotPasswordController;
@@ -35,11 +36,17 @@ Route::group([
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('refresh', [AuthController::class, 'refresh']);
     Route::get('me', [AuthController::class, 'me']);
+    Route::put('me', [AuthController::class, 'updateMe']);
+    Route::put('me/password', [AuthController::class, 'updatePassword']);
     Route::get('reports/all', [ReportController::class, 'showReports']);
+    Route::get('reports/mine', [ReportController::class, 'myReports'])->middleware('auth:api');
+    Route::get('reports/stats', [ReportController::class, 'stats'])->middleware('auth:api');
     Route::get('users/all', [ReportController::class, 'showUsers']);
-    Route::post('reports/{user_id}', [ReportController::class, 'reportStore']);
+    // 'public' doit être déclarée avant {user_id}, sinon elle est capturée par le paramètre.
     Route::post('reports/public', [ReportController::class, 'reportPublicStore']);
+    Route::post('reports/{user_id}', [ReportController::class, 'reportStore'])->whereNumber('user_id')->middleware('auth:api');
 });
+Route::get('countries', [CountryController::class, 'index']);
 Route::get('image/{filename}', [ReportController::class, 'getImage'])->where('path', '.*');
 Route::post('password/email',  ForgotPasswordController::class);
 Route::post('password/code/check', CodeCheckController::class);

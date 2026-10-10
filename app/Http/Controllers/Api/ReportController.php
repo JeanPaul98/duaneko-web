@@ -52,23 +52,34 @@ class ReportController extends Controller
 // TODO: Ici c'est l'api pour l'utilisateur qui est connecter.
 public function reportStore(ReportStoreRequest $request)
 {
-    $file = $request->file('image');
-    $imageName =  time().".".$file->getClientOriginalExtension(); 
-   
-    $report=Report::create(
-        array_merge(
-            $request->validated() + ['user_id'=>auth('api')->id()],
-            [
-                'image' => $imageName,
-                ]
-            ),
-                
-                
-    );
-      // Save Image in Storage folder
-      Storage::disk('public')->put($imageName, file_get_contents($request->image));
+    return $this->storeReport($request, auth('api')->id());
+}
 
-   
+/**
+ * Enregistre l'image puis le signalement ; l'image est supprimée si l'insertion échoue.
+ */
+private function storeReport(ReportStoreRequest $request, ?int $userId)
+{
+    $data = $request->validated();
+    $file = $request->file('image');
+    $imageName = Str::uuid().'.'.$file->getClientOriginalExtension();
+
+    Storage::disk('public')->putFileAs('', $file, $imageName);
+
+    try {
+        $report = Report::create([
+            'image' => $imageName,
+            'type' => $data['type'] ?? 'wild_dumps',
+            'latitude' => $data['latitude'],
+            'longitude' => $data['longitude'],
+            'description' => $data['description'] ?? '',
+            'user_id' => $userId,
+        ]);
+    } catch (\Throwable $e) {
+        Storage::disk('public')->delete($imageName);
+        throw $e;
+    }
+
     return response()->json(
         [
             'message' => "signalement inserer avec succes",
@@ -76,7 +87,6 @@ public function reportStore(ReportStoreRequest $request)
         ],
         201
     );
-
 }
 
 #[OA\Post(
@@ -108,28 +118,7 @@ public function reportStore(ReportStoreRequest $request)
 // TODO: Ici c'est l'api pour l'utilisateur qui n'est pas connecter.
 public function reportPublicStore(ReportStoreRequest $request)
 {
-    $file = $request->file('image');
-    $imageName =  time().".".$file->getClientOriginalExtension(); 
-
-     
-    $report=Report::create(
-        array_merge(
-        $request->validated() ,
-           [
-                'image' =>   $imageName,
-           ]
-           )
-    );
-        // Save Image in Storage folder
-        Storage::disk('public')->put($imageName, file_get_contents($request->image));
-    return response()->json(
-        [
-            'message' => "signalement inserer avec succes",
-            'report'=>$report
-        ],
-        201
-    );
-
+    return $this->storeReport($request, null);
 }
 
 #[OA\Get(
@@ -166,6 +155,84 @@ public function showReports(Request $request)
     );
 
 }
+#[OA\Get(
+    path: '/auth/reports/mine',
+    tags: ['Signalements'],
+    summary: "Lister les signalements de l'utilisateur connecté (paginé)",
+    description: "Mêmes paramètres et même format de réponse que /auth/reports/all, filtrés sur l'auteur du jeton. Filtre optionnel 'status'.",
+    security: [['bearerAuth' => []]],
+    parameters: [
+        new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1)),
+        new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15, maximum: 50)),
+        new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['pending', 'in_progress', 'done'])),
+    ],
+    responses: [
+        new OA\Response(response: 200, description: 'Page de signalements', content: new OA\JsonContent(properties: [
+            new OA\Property(property: 'reports', properties: [
+                new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/Report')),
+                new OA\Property(property: 'current_page', type: 'integer', example: 1),
+                new OA\Property(property: 'last_page', type: 'integer', example: 2),
+                new OA\Property(property: 'per_page', type: 'integer', example: 15),
+                new OA\Property(property: 'total', type: 'integer', example: 18),
+            ], type: 'object'),
+        ])),
+        new OA\Response(response: 401, description: 'Non authentifié'),
+    ]
+)]
+public function myReports(Request $request)
+{
+    $request->validate([
+        'status' => 'nullable|in:pending,in_progress,done',
+    ]);
+
+    $perPage = max(1, min((int) $request->query('per_page', 15), 50));
+
+    $reports = Report::where('user_id', auth('api')->id())
+        ->when($request->query('status'), fn ($q, $status) => $q->where('status', $status))
+        ->latest()
+        ->paginate($perPage);
+
+    return response()->json(['reports' => $reports], 200);
+}
+
+#[OA\Get(
+    path: '/auth/reports/stats',
+    tags: ['Signalements'],
+    summary: 'Statistiques des signalements',
+    description: "Compteurs globaux et compteurs de l'utilisateur connecté. 'done' = signalements traités (ramassés).",
+    security: [['bearerAuth' => []]],
+    responses: [
+        new OA\Response(response: 200, description: 'Statistiques', content: new OA\JsonContent(properties: [
+            new OA\Property(property: 'stats', properties: [
+                new OA\Property(property: 'total', type: 'integer', example: 62),
+                new OA\Property(property: 'done', type: 'integer', example: 40),
+                new OA\Property(property: 'mine', type: 'integer', example: 5),
+                new OA\Property(property: 'mine_done', type: 'integer', example: 3),
+            ], type: 'object'),
+        ])),
+        new OA\Response(response: 401, description: 'Non authentifié'),
+    ]
+)]
+public function stats()
+{
+    $userId = auth('api')->id();
+
+    $stats = Report::selectRaw('COUNT(*) as total')
+        ->selectRaw("COUNT(CASE WHEN status = 'done' THEN 1 END) as done")
+        ->selectRaw('COUNT(CASE WHEN user_id = ? THEN 1 END) as mine', [$userId])
+        ->selectRaw("COUNT(CASE WHEN user_id = ? AND status = 'done' THEN 1 END) as mine_done", [$userId])
+        ->first();
+
+    return response()->json([
+        'stats' => [
+            'total' => (int) $stats->total,
+            'done' => (int) $stats->done,
+            'mine' => (int) $stats->mine,
+            'mine_done' => (int) $stats->mine_done,
+        ],
+    ], 200);
+}
+
 #[OA\Get(
     path: '/image/{filename}',
     tags: ['Signalements'],

@@ -106,7 +106,7 @@
                                 </span>
 
                                 <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
-                                    <span>Assigné le {{ $ramassage->created_at->format('d/m/Y H:i') }}</span>
+                                    <span>Assigné le {{ $ramassage->created_at?->format('d/m/Y H:i') ?? '—' }}</span>
                                 </span>
                             </span>
                         </a>
@@ -159,7 +159,7 @@
                                 <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
                                     <span>En attente</span>
                                     <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
-                                    <span>{{ $report->created_at->diffForHumans() }}</span>
+                                    <span>{{ $report->created_at?->diffForHumans() ?? '—' }}</span>
                                 </span>
                             </span>
                         </a>
